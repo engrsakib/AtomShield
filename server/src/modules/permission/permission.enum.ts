@@ -1,3 +1,5 @@
+import { ROLES } from "@/constants/roles";
+
 export enum PermissionEnum {
   CREATE_STUDENT = "create_student",
   VIEW_STUDENT = "view_student",
@@ -32,6 +34,8 @@ export enum PermissionEnum {
   CHECK_RESULT = "check_result",
 
   MANAGE_PERMISSIONS = "manage_permissions",
+  PERMISSIONS_AUDIT = "permissions_audit",
+  PERMISSIONS_VIEW = "permissions_view",
 }
 
 export enum PermissionGroup {
@@ -42,3 +46,28 @@ export enum PermissionGroup {
   PAYMENT = "Payment",
   ADMIN = "Admin",
 }
+
+
+export const ROLE_DEFAULT_PERMISSIONS: Record<string, PermissionEnum[]> = {
+  [ROLES.ADMIN]: Object.values(PermissionEnum), 
+  
+  [ROLES.MANAGER]: [
+    PermissionEnum.VIEW_STUDENT, PermissionEnum.UPDATE_STUDENT,
+    PermissionEnum.VIEW_EXAM, PermissionEnum.UPDATE_EXAM,
+    PermissionEnum.VIEW_QUESTION, PermissionEnum.VIEW_BOOK,
+    PermissionEnum.VIEW_STAFF, PermissionEnum.CHECK_RESULT,
+    PermissionEnum.PERMISSIONS_VIEW 
+  ],
+  
+  [ROLES.AGENT]: [
+    PermissionEnum.VIEW_STUDENT,
+    PermissionEnum.VIEW_EXAM,
+    PermissionEnum.VIEW_BOOK,
+    PermissionEnum.CHECK_RESULT
+  ],
+  
+  [ROLES.CUSTOMER]: [
+    PermissionEnum.VIEW_BOOK,
+    PermissionEnum.CHECK_RESULT
+  ]
+};

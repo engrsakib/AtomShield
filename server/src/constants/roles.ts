@@ -7,3 +7,4 @@ export const ROLES = {
 };
 
 export type IRoles = (typeof ROLES)[keyof typeof ROLES];
+
