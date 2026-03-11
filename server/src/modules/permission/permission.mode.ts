@@ -5,7 +5,7 @@ const permissionSchema = new Schema(
   {
     user: {
       type: Types.ObjectId,
-      ref: "User",
+      ref: "Admin",
       required: true,
     },
     key: {
@@ -30,8 +30,27 @@ const permissionSchema = new Schema(
     },
     createdBy: {
       type: Types.ObjectId,
-      ref: "User",
+      ref: "Admin",
     },
+    audit_logs: [
+      {
+        action: {
+          type: String,
+          enum: ["created", "updated", "deleted"],
+        },
+        changedBy: {
+          type: Types.ObjectId,
+          ref: "Admin",
+        },
+        timestamp: {
+          type: Date,
+          default: Date.now,
+        },
+        changes: {
+          type: String,
+        },
+      },
+    ],  
   },
   {
     timestamps: true,

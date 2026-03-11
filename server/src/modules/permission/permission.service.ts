@@ -1,14 +1,191 @@
+import { AdminModel } from "../admin/admin.model";
+import { PermissionModel } from "./permission.mode";
+import { PermissionEnum } from "./permission.enum";
 import ApiError from "@/middlewares/error";
 import { HttpStatusCode } from "@/lib/httpStatus";
-import mongoose from "mongoose";
-import { PermissionModel } from "./permission.mode";
-import { AdminModel } from "../admin/admin.model";
-import { PermissionEnum } from "./permission.enum";
+import mongoose, { Types } from "mongoose";
+import { IRoles, ROLES } from "@/constants/roles";
+
+// class Service {
+//   /**
+//    * Create or Update Permissions with Hierarchy and Grant Ceiling Checks
+//    */
+//   async CreateAndUpdatePermissions(
+//     userId: string,
+//     requestedPermissions: PermissionEnum[],
+//     creatorId: string,
+//     note?: string
+//   ) {
+//     const session = await mongoose.startSession();
+//     session.startTransaction();
+
+//     try {
+//       const creator = await AdminModel.findById(creatorId)
+//         .populate("permissions")
+//         .session(session);
+
+//       const targetUser = await AdminModel.findById(userId).session(session);
+
+//       if (!creator || !targetUser) {
+//         throw new ApiError(
+//           HttpStatusCode.NOT_FOUND,
+//           "User or Creator not found"
+//         );
+//       }
+
+//       // ২. Hierarchy Validation (Role Weight Logic)
+//       const roleWeight: Record<IRoles, number> = {
+//         [ROLES.ADMIN]: 3,
+//         [ROLES.MANAGER]: 2,
+//         [ROLES.AGENT]: 1,
+//         [ROLES.CUSTOMER]: 0,
+//       };
+//       const creatorWeight = roleWeight[creator.role.toLowerCase()] || 0;
+//       const targetWeight = roleWeight[targetUser.role.toLowerCase()] || 0;
+
+//       if (
+//         creatorId !== userId &&
+//         creatorWeight <= targetWeight &&
+//         creator.role.toLowerCase() !== "admin"
+//       ) {
+//         throw new ApiError(
+//           HttpStatusCode.FORBIDDEN,
+//           "Hierarchy Violation: You cannot modify permissions of a higher or equal role user."
+//         );
+//       }
+
+//       const creatorPermDoc = creator.permissions as any;
+//       const creatorKeys: string[] = creatorPermDoc?.key || [];
+
+//       if (creator.role.toLowerCase() !== "admin") {
+//         const invalidKeys = requestedPermissions.filter(
+//           (p) => !creatorKeys.includes(p)
+//         );
+//         if (invalidKeys.length > 0) {
+//           throw new ApiError(
+//             HttpStatusCode.FORBIDDEN,
+//             `Grant Ceiling Violation: You cannot grant permissions you don't possess: ${invalidKeys.join(", ")}`
+//           );
+//         }
+//       }
+
+//       let permissionDoc = await PermissionModel.findOne({
+//         user: userId,
+//       }).session(session);
+//       const actionType = permissionDoc ? "updated" : "created";
+//       const oldKeys = permissionDoc ? permissionDoc.key.join(", ") : "None";
+
+//       if (!permissionDoc) {
+
+//         permissionDoc = new PermissionModel({
+//           user: userId,
+//           key: requestedPermissions,
+//           note: note || "Initial permissions assigned",
+//           createdBy: creatorId,
+//           audit_logs: [
+//             {
+//               action: "created",
+//               changedBy: creatorId,
+//               changes: `Initial permissions: ${requestedPermissions.join(", ")}`,
+//             },
+//           ],
+//         });
+
+//         await permissionDoc.save({ session });
+
+//         targetUser.permissions = permissionDoc._id as any;
+//         await targetUser.save({ session });
+//       } else {
+
+//         permissionDoc.key = requestedPermissions;
+//         if (note) permissionDoc.note = note;
+//         permissionDoc.createdBy = creatorId as any;
+
+//         permissionDoc.audit_logs.push({
+//           action: "updated",
+//           changedBy: creatorId,
+//           timestamp: new Date(),
+//           changes: `Changed from [${oldKeys}] to [${requestedPermissions.join(", ")}]`,
+//         });
+
+//         await permissionDoc.save({ session });
+//       }
+
+//       await session.commitTransaction();
+//       return {
+//         success: true,
+//         message: `Permissions ${actionType} successfully`,
+//         data: permissionDoc,
+//       };
+//     } catch (error: any) {
+//       await session.abortTransaction();
+//       console.error("Permission Service Error:", error);
+//       throw new ApiError(
+//         error.statusCode || HttpStatusCode.INTERNAL_SERVER_ERROR,
+//         error.message || "Failed to process permission request"
+//       );
+//     } finally {
+//       session.endSession();
+//     }
+//   }
+// }
 
 class Service {
+  /**
+   * hierarchy validation: Creator can only modify permissions of users with lower roles (unless it's self-editing)
+   * Admin > Manager > Agent > Customer
+   */
+  private validateHierarchy(
+    creatorRole: string,
+    targetRole: string,
+    isSelf: boolean
+  ): void {
+    const roleWeight: Record<string, number> = {
+      [ROLES.ADMIN]: 3,
+      [ROLES.MANAGER]: 2,
+      [ROLES.AGENT]: 1,
+      [ROLES.CUSTOMER]: 0,
+    };
+
+    const creatorWeight = roleWeight[creatorRole as IRoles] || 0;
+    const targetWeight = roleWeight[targetRole as IRoles] || 0;
+
+    // যদি এডমিন না হয়, তবে নিজের সমান বা উপরের কাউকে এডিট করতে পারবে না
+    if (!isSelf && creatorRole !== ROLES.ADMIN) {
+      if (creatorWeight <= targetWeight) {
+        throw new ApiError(
+          HttpStatusCode.FORBIDDEN,
+          "Hierarchy Violation: You cannot modify permissions of a higher or equal role user."
+        );
+      }
+    }
+  }
+
+  /**
+   * গ্র্যান্ট সিলিং চেক (নিজে যা হোল্ড করো না তা দিতে পারবে না)
+   */
+  private validateGrantCeiling(
+    creatorRole: string,
+    creatorKeys: string[],
+    requestedKeys: string[]
+  ): void {
+    if (creatorRole !== ROLES.ADMIN) {
+      const invalidKeys = requestedKeys.filter((p) => !creatorKeys.includes(p));
+      if (invalidKeys.length > 0) {
+        throw new ApiError(
+          HttpStatusCode.FORBIDDEN,
+          `Grant Ceiling Violation: You cannot grant permissions you don't possess: ${invalidKeys.join(", ")}`
+        );
+      }
+    }
+  }
+
+  /**
+   * মূল মেথড: পারমিশন ক্রিয়েট বা আপডেট
+   */
   async CreateAndUpdatePermissions(
     userId: string,
-    permissions: PermissionEnum[],
+    requestedPermissions: PermissionEnum[],
     creatorId: string,
     note?: string
   ) {
@@ -16,54 +193,92 @@ class Service {
     session.startTransaction();
 
     try {
-      const user = await AdminModel.findById(userId).session(session);
-      if (!user) {
-        throw new ApiError(HttpStatusCode.NOT_FOUND, "User not found");
-      }
+      // ১. ডাটা ফেচিং
+      const creator = await AdminModel.findById(creatorId)
+        .populate("permissions")
+        .session(session);
+      const targetUser = await AdminModel.findById(userId).session(session);
 
-      if (!permissions || permissions.length === 0) {
+      if (!creator || !targetUser) {
         throw new ApiError(
-          HttpStatusCode.BAD_REQUEST,
-          "Permissions are required"
+          HttpStatusCode.NOT_FOUND,
+          "User or Creator not found"
         );
       }
 
-      let ValidPermission = null;
+      // ২. হায়ারআর্কি ভ্যালিডেশন
+      this.validateHierarchy(
+        creator.role,
+        targetUser.role,
+        creatorId === userId
+      );
 
-      if (user.permissions) {
-        ValidPermission = await PermissionModel.findById(
-          user.permissions
-        ).session(session);
-      }
+      // ৩. গ্র্যান্ট সিলিং ভ্যালিডেশন
+      const creatorPermDoc = creator.permissions as any;
+      const creatorKeys: string[] = creatorPermDoc?.key || [];
+      this.validateGrantCeiling(
+        creator.role,
+        creatorKeys,
+        requestedPermissions
+      );
 
-      if (!ValidPermission) {
-        const newPermission = new PermissionModel({
-          user: user._id,
-          key: permissions,
-          note: note || "Permission created by admin",
-          createdBy: creatorId,
+      // ৪. পারমিশন ডকুমেন্ট খোঁজা বা তৈরি করা
+      let permissionDoc = await PermissionModel.findOne({
+        user: userId,
+      }).session(session);
+      const actionType = permissionDoc ? "updated" : "created";
+      const oldKeys = permissionDoc ? permissionDoc.key.join(", ") : "None";
+
+      if (!permissionDoc) {
+        // নতুন তৈরি
+        permissionDoc = new PermissionModel({
+          user: new Types.ObjectId(userId),
+          key: requestedPermissions,
+          note: note || "Initial permissions assigned",
+          createdBy: new Types.ObjectId(creatorId),
+          audit_logs: [
+            {
+              action: "created",
+              changedBy: new Types.ObjectId(creatorId),
+              changes: `Initial permissions: ${requestedPermissions.join(", ")}`,
+            },
+          ],
         });
 
-        await newPermission.save({ session });
-        user.permissions = newPermission._id as any;
-        await user.save({ session });
-        ValidPermission = newPermission;
+        await permissionDoc.save({ session });
+
+        // ইউজারের রেফারেন্স আপডেট
+        targetUser.permissions = permissionDoc._id as any;
+        await targetUser.save({ session });
       } else {
-        ValidPermission.key = permissions;
-        if (note) {
-          ValidPermission.note = note;
-        }
-        await ValidPermission.save({ session });
+        // আপডেট লজিক
+        permissionDoc.key = requestedPermissions;
+        if (note) permissionDoc.note = note;
+        permissionDoc.createdBy = new Types.ObjectId(creatorId) as any;
+
+        // অডিট লগ পুশ
+        permissionDoc.audit_logs.push({
+          action: "updated",
+          changedBy: new Types.ObjectId(creatorId),
+          timestamp: new Date(),
+          changes: `Changed from [${oldKeys}] to [${requestedPermissions.join(", ")}]`,
+        });
+
+        await permissionDoc.save({ session });
       }
-      user.password = undefined as any;
+
       await session.commitTransaction();
-      return { user, permission: ValidPermission };
-    } catch (error) {
-      console.error("Error in CreateAndUpdatePermissions:", error);
+      return {
+        success: true,
+        message: `Permissions ${actionType} successfully`,
+        data: permissionDoc,
+      };
+    } catch (error: any) {
       await session.abortTransaction();
+      console.error("Permission Service Error:", error);
       throw new ApiError(
-        HttpStatusCode.INTERNAL_SERVER_ERROR,
-        "Failed to create/update permissions"
+        error.statusCode || HttpStatusCode.INTERNAL_SERVER_ERROR,
+        error.message || "Failed to process permission request"
       );
     } finally {
       session.endSession();

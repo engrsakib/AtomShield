@@ -9,7 +9,7 @@ export interface IPermission {
   note?: string;
   group?: PermissionGroup;
   isActive?: boolean;
-  createdBy?: Types.ObjectId;
+  createdBy?: Types.ObjectId | null | string;
   createdAt?: Date;
   updatedAt?: Date;
 }
