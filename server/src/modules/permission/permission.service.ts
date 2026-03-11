@@ -9,6 +9,7 @@ class Service {
   async CreateAndUpdatePermissions(
     userId: string,
     permissions: PermissionEnum[],
+    creatorId: string,
     note?: string
   ) {
     const session = await mongoose.startSession();
@@ -40,7 +41,7 @@ class Service {
           user: user._id,
           key: permissions,
           note: note || "Permission created by admin",
-          createdBy: user._id,
+          createdBy: creatorId,
         });
 
         await newPermission.save({ session });
