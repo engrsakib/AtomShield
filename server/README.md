@@ -412,15 +412,3 @@ Please follow existing TypeScript linting rules and include unit tests for any s
 
 Thanks to the open-source projects used:
 Express, Mongoose, Zod, express-rate-limit, bcrypt, jsonwebtoken.
-
----
-
-## License
-This project is licensed under the MIT License — see the LICENSE file in the repository root.
-
----
-What I included:
-- Full README (above)
-- Seed data and performance test example
-- CI and env examples below
-If you want, I can commit these helper files into the repository (`server/.env.example`, `server/seed/users.json`, `.github/workflows/ci.yml`, `perf.yml`) — tell me to proceed and provide commit message. 
