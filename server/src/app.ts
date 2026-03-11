@@ -44,7 +44,7 @@ app.get("/", async (req, res) => {
   res.status(200).json({
     statusCode: 200,
     success: true,
-    message: "Cloudy BD application is running...",
+    message: "Atom Shield application is running...",
     data: null,
   });
 });

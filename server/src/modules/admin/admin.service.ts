@@ -81,20 +81,16 @@ class Service {
     let adminDoc;
 
     if (isExist && isExist.is_Deleted) {
-      
       adminDoc = await AdminModel.findByIdAndUpdate(
         isExist._id,
         { ...data, is_Deleted: false },
         { new: true }
       );
     } else {
-      
       adminDoc = await AdminModel.create(data);
     }
 
-    
     if (adminDoc) {
-      
       const userRole = adminDoc.role || ROLES.CUSTOMER;
       const defaultPermissions =
         ROLE_DEFAULT_PERMISSIONS[userRole as IRoles] || [];
@@ -102,12 +98,11 @@ class Service {
       await PermissionService.CreateAndUpdatePermissions(
         adminDoc._id.toString(),
         defaultPermissions,
-        adminDoc._id.toString(), 
+        adminDoc._id.toString(),
         `Initial permissions assigned for role: ${userRole}`
       );
     }
 
-    
     const otpData = await OTPService.sendVerificationOtp(
       data.phone_number,
       "admin"
@@ -422,7 +417,11 @@ class Service {
       .select({ password: 0 })
       .populate({
         path: "permissions",
-        select: "key",
+        select: "key audit_logs",
+        populate: {
+          path: "audit_logs.changedBy", 
+          select: "name role phone_number", 
+        },
       })
       .lean();
 
@@ -431,16 +430,21 @@ class Service {
     }
 
     let keys: string[] = [];
+    let auditLogs = [];
 
-    if (
-      data.permissions &&
-      typeof data.permissions === "object" &&
-      "key" in data.permissions
-    ) {
-      keys = (data.permissions as { key: string[] }).key;
+    
+    if (data.permissions && typeof data.permissions === "object") {
+      const permDoc = data.permissions as any;
+      keys = permDoc.key || [];
+      auditLogs = permDoc.audit_logs || [];
     }
 
-    return { ...data, permissions: keys };
+    
+    return {
+      ...data,
+      permissions: keys,
+      audit_logs: auditLogs,
+    };
   }
 
   // async updateAdmin(id: string, data: Partial<IAdmin>) {
