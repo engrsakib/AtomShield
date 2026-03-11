@@ -150,7 +150,7 @@ class Service {
     const creatorWeight = roleWeight[creatorRole as IRoles] || 0;
     const targetWeight = roleWeight[targetRole as IRoles] || 0;
 
-    // যদি এডমিন না হয়, তবে নিজের সমান বা উপরের কাউকে এডিট করতে পারবে না
+    
     if (!isSelf && creatorRole !== ROLES.ADMIN) {
       if (creatorWeight <= targetWeight) {
         throw new ApiError(
@@ -162,7 +162,7 @@ class Service {
   }
 
   /**
-   * গ্র্যান্ট সিলিং চেক (নিজে যা হোল্ড করো না তা দিতে পারবে না)
+   * Grant Ceiling Validation: Creator can only grant permissions they possess
    */
   private validateGrantCeiling(
     creatorRole: string,
@@ -180,9 +180,6 @@ class Service {
     }
   }
 
-  /**
-   * মূল মেথড: পারমিশন ক্রিয়েট বা আপডেট
-   */
   async CreateAndUpdatePermissions(
     userId: string,
     requestedPermissions: PermissionEnum[],
@@ -193,7 +190,7 @@ class Service {
     session.startTransaction();
 
     try {
-      // ১. ডাটা ফেচিং
+      
       const creator = await AdminModel.findById(creatorId)
         .populate("permissions")
         .session(session);
@@ -206,14 +203,14 @@ class Service {
         );
       }
 
-      // ২. হায়ারআর্কি ভ্যালিডেশন
+      
       this.validateHierarchy(
         creator.role,
         targetUser.role,
         creatorId === userId
       );
 
-      // ৩. গ্র্যান্ট সিলিং ভ্যালিডেশন
+      
       const creatorPermDoc = creator.permissions as any;
       const creatorKeys: string[] = creatorPermDoc?.key || [];
       this.validateGrantCeiling(
@@ -222,7 +219,7 @@ class Service {
         requestedPermissions
       );
 
-      // ৪. পারমিশন ডকুমেন্ট খোঁজা বা তৈরি করা
+      
       let permissionDoc = await PermissionModel.findOne({
         user: userId,
       }).session(session);
@@ -230,7 +227,7 @@ class Service {
       const oldKeys = permissionDoc ? permissionDoc.key.join(", ") : "None";
 
       if (!permissionDoc) {
-        // নতুন তৈরি
+        
         permissionDoc = new PermissionModel({
           user: new Types.ObjectId(userId),
           key: requestedPermissions,
@@ -247,16 +244,16 @@ class Service {
 
         await permissionDoc.save({ session });
 
-        // ইউজারের রেফারেন্স আপডেট
+      
         targetUser.permissions = permissionDoc._id as any;
         await targetUser.save({ session });
       } else {
-        // আপডেট লজিক
+    
         permissionDoc.key = requestedPermissions;
         if (note) permissionDoc.note = note;
         permissionDoc.createdBy = new Types.ObjectId(creatorId) as any;
 
-        // অডিট লগ পুশ
+        
         permissionDoc.audit_logs.push({
           action: "updated",
           changedBy: new Types.ObjectId(creatorId),
