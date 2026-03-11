@@ -1,5 +1,5 @@
 {
-  "name": "mcq-analyzer-backend",
+  "name": "atom_shield",
   "version": "1.0.0",
   "description": "",
   "main": "./dist/server.js",

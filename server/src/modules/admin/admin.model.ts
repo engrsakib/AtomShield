@@ -39,7 +39,7 @@ const adminSchema = new Schema<IAdmin>(
     },
     role: {
       type: String,
-      default: ROLES.ADMIN,
+      default: ROLES.CUSTOMER,
     },
     image: {
       type: String,
