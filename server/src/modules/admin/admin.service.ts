@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { ADMIN_ENUMS, IAdmin } from "./admin.interface";
 import { AdminModel } from "./admin.model";
 import { BcryptInstance } from "@/lib/bcrypt";
@@ -16,37 +16,107 @@ import {
 import { OTPService } from "../otp/otp.service";
 import { IOtpVerify } from "../otp/otp.interface";
 import { SMSService } from "../sms/sms.service";
+import { ROLE_DEFAULT_PERMISSIONS } from "../permission/permission.enum";
+import { PermissionService } from "../permission/permission.service";
+import { IRoles, ROLES } from "@/constants/roles";
 
 class Service {
+  // async create(data: IAdmin) {
+  //   const isExist = await AdminModel.findOne({
+  //     phone_number: data.phone_number,
+  //   });
+
+  //   if (isExist && !isExist.is_Deleted) {
+  //     throw new ApiError(
+  //       HttpStatusCode.CONFLICT,
+  //       `You already have an account with the phone number: ${data.phone_number}. Please login to your account`
+  //     );
+  //   }
+
+  //   data.password = await BcryptInstance.hash(data.password);
+
+  //   if (isExist && isExist.is_Deleted) {
+  //     await AdminModel.findByIdAndUpdate(
+  //       isExist._id,
+  //       {
+  //         ...data,
+  //         is_Deleted: false,
+  //       },
+  //       { new: true }
+  //     );
+  //     const otpData = await OTPService.sendVerificationOtp(
+  //       data.phone_number,
+  //       "admin"
+  //     );
+
+  //     return {
+  //       ...otpData,
+  //     };
+  //   }
+
+  //   const admin = await AdminModel.create(data);
+  //   await OTPService.sendVerificationOtp(data.phone_number, "admin");
+
+  //     const defaultPermissions = ROLE_DEFAULT_PERMISSIONS[ROLES.CUSTOMER] || [];
+
+  //     await PermissionService.CreateAndUpdatePermissions(
+  //       admin._id as unknown as string,
+  //       defaultPermissions,
+  //       admin._id as unknown as string,
+  //       `System: Default permissions assigned for role upgrade to ${ROLES.CUSTOMER}`,
+  //     );
+
+  // }
+
   async create(data: IAdmin) {
     const isExist = await AdminModel.findOne({
       phone_number: data.phone_number,
     });
 
     if (isExist && !isExist.is_Deleted) {
-      throw new ApiError(
-        HttpStatusCode.CONFLICT,
-        `You already have an account with the phone number: ${data.phone_number}. Please login to your account`
-      );
+      throw new ApiError(HttpStatusCode.CONFLICT, "Account already exists.");
     }
 
     data.password = await BcryptInstance.hash(data.password);
+    let adminDoc;
 
     if (isExist && isExist.is_Deleted) {
-      await AdminModel.findByIdAndUpdate(
+      
+      adminDoc = await AdminModel.findByIdAndUpdate(
         isExist._id,
-        {
-          ...data,
-          is_Deleted: false,
-        },
+        { ...data, is_Deleted: false },
         { new: true }
       );
-      await OTPService.sendVerificationOtp(data.phone_number, "admin");
-      return;
+    } else {
+      
+      adminDoc = await AdminModel.create(data);
     }
 
-    await AdminModel.create(data);
-    await OTPService.sendVerificationOtp(data.phone_number, "admin");
+    
+    if (adminDoc) {
+      
+      const userRole = adminDoc.role || ROLES.CUSTOMER;
+      const defaultPermissions =
+        ROLE_DEFAULT_PERMISSIONS[userRole as IRoles] || [];
+
+      await PermissionService.CreateAndUpdatePermissions(
+        adminDoc._id.toString(),
+        defaultPermissions,
+        adminDoc._id.toString(), 
+        `Initial permissions assigned for role: ${userRole}`
+      );
+    }
+
+    
+    const otpData = await OTPService.sendVerificationOtp(
+      data.phone_number,
+      "admin"
+    );
+
+    return {
+      admin: adminDoc,
+      ...otpData,
+    };
   }
 
   async createAdminByAdmin(data: IAdmin) {
@@ -373,35 +443,91 @@ class Service {
     return { ...data, permissions: keys };
   }
 
-  async updateAdmin(id: string, data: Partial<IAdmin>) {
-    if (!id) {
-      throw new ApiError(HttpStatusCode.BAD_REQUEST, "Admin ID is required");
-    }
-    const duplicatePhone = await AdminModel.findOne({
-      phone_number: data.phone_number,
-      _id: { $ne: id },
-    });
-    if (duplicatePhone) {
-      throw new ApiError(
-        HttpStatusCode.CONFLICT,
-        `You already have an account with the phone number: ${data.phone_number}. Please use a different phone number`
-      );
-    }
+  // async updateAdmin(id: string, data: Partial<IAdmin>) {
+  //   if (!id) {
+  //     throw new ApiError(HttpStatusCode.BAD_REQUEST, "Admin ID is required");
+  //   }
+  //   const duplicatePhone = await AdminModel.findOne({
+  //     phone_number: data.phone_number,
+  //     _id: { $ne: id },
+  //   });
+  //   if (duplicatePhone) {
+  //     throw new ApiError(
+  //       HttpStatusCode.CONFLICT,
+  //       `You already have an account with the phone number: ${data.phone_number}. Please use a different phone number`
+  //     );
+  //   }
 
-    const isExist = await AdminModel.findById(id);
-    if (!isExist) {
-      throw new ApiError(HttpStatusCode.NOT_FOUND, "Admin was not found");
-    }
+  //   const isExist = await AdminModel.findById(id);
+  //   if (!isExist) {
+  //     throw new ApiError(HttpStatusCode.NOT_FOUND, "Admin was not found");
+  //   }
 
-    if ("password" in data) {
-      if (data.password && data.password.length > 0 && data.password.trim()) {
-        data.password = await BcryptInstance.hash(data.password);
-      } else {
-        delete data.password;
+  //   if ("password" in data) {
+  //     if (data.password && data.password.length > 0 && data.password.trim()) {
+  //       data.password = await BcryptInstance.hash(data.password);
+  //     } else {
+  //       delete data.password;
+  //     }
+  //   }
+
+  //   return await AdminModel.findByIdAndUpdate(id, { ...data }, { new: true });
+  // }
+
+  async updateAdmin(id: string, data: Partial<IAdmin>, creatorId: string) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const isExist = await AdminModel.findById(id).session(session);
+      if (!isExist) {
+        throw new ApiError(HttpStatusCode.NOT_FOUND, "Admin was not found");
       }
-    }
 
-    return await AdminModel.findByIdAndUpdate(id, { ...data }, { new: true });
+      if (data.phone_number) {
+        const duplicatePhone = await AdminModel.findOne({
+          phone_number: data.phone_number,
+          _id: { $ne: id },
+        }).session(session);
+
+        if (duplicatePhone) {
+          throw new ApiError(
+            HttpStatusCode.CONFLICT,
+            "Phone number already in use"
+          );
+        }
+      }
+
+      if (data.password) {
+        data.password = await BcryptInstance.hash(data.password);
+      }
+
+      if (data.role && data.role !== isExist.role) {
+        const defaultPermissions = ROLE_DEFAULT_PERMISSIONS[data.role] || [];
+
+        await PermissionService.CreateAndUpdatePermissions(
+          id,
+          defaultPermissions,
+          creatorId,
+          `System: Default permissions assigned for role upgrade to ${data.role}`,
+          session
+        );
+      }
+
+      const updatedAdmin = await AdminModel.findByIdAndUpdate(
+        id,
+        { ...data },
+        { new: true, session }
+      );
+
+      await session.commitTransaction();
+      return updatedAdmin;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
   }
 
   async changePassword(id: string, payload: IChangePassword) {

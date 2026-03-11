@@ -6,13 +6,13 @@ import { cookieManager } from "@/shared/cookie";
 
 class Controller extends BaseController {
   createAdmin = this.catchAsync(async (req: Request, res: Response) => {
-    await AdminService.create(req.body);
+    const otp = await AdminService.create(req.body);
     this.sendResponse(res, {
       statusCode: HttpStatusCode.CREATED,
       success: true,
       message:
         "Your admin account has been created. We've sent a verification OTP to your phone number. Please check your phone and verify your account",
-      data: null,
+      data: otp,
     });
   });
 
@@ -133,7 +133,16 @@ class Controller extends BaseController {
 
   updateAdmin = this.catchAsync(async (req: Request, res: Response) => {
     const id = req.params.id;
-    const data = await AdminService.updateAdmin(id, req.body);
+    const reqestId = req.user?.id;
+    // if (id !== reqestId) {
+    //   return this.sendResponse(res, {
+    //     statusCode: 403,
+    //     success: false,
+    //     message: "You can only update your own profile",
+    //     data: null,
+    //   });
+    // }
+    const data = await AdminService.updateAdmin(id, req.body, reqestId);
     this.sendResponse(res, {
       statusCode: 200,
       success: true,

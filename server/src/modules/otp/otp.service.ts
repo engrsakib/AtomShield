@@ -44,6 +44,11 @@ class Service {
 
     // send sms to verify account
     await SMSService.sendOtp(phone_number, otp);
+
+    return {
+      phone_number,
+      otp, // remove this in production
+    };
   }
 
   async verifyOTP(data: IOtpVerify) {

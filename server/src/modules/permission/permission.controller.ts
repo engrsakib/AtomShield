@@ -17,6 +17,17 @@ class Controller extends BaseController {
         return;
       }
 
+      const creatorId = req.user.id;
+      if (!creatorId) {
+        this.sendResponse(res, {
+          statusCode: HttpStatusCode.BAD_REQUEST, 
+          success: false,
+          message: "Creator ID is required",
+        });
+        return;
+      }
+
+
       const { permissions, note } = req.body;
       const data = await PermissionService.CreateAndUpdatePermissions(
         userId,

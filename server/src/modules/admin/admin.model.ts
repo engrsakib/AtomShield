@@ -48,7 +48,7 @@ const adminSchema = new Schema<IAdmin>(
     status: {
       type: String,
       enum: ["inactive", "admin_approval", "active"],
-      default: "inactive",
+      default: "active",
     },
   },
   schemaOptions
