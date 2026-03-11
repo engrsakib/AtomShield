@@ -150,7 +150,6 @@ class Service {
     const creatorWeight = roleWeight[creatorRole as IRoles] || 0;
     const targetWeight = roleWeight[targetRole as IRoles] || 0;
 
-    
     if (!isSelf && creatorRole !== ROLES.ADMIN) {
       if (creatorWeight <= targetWeight) {
         throw new ApiError(
@@ -223,8 +222,8 @@ class Service {
       let permissionDoc = await PermissionModel.findOne({
         user: userId,
       }).session(session);
+
       const actionType = permissionDoc ? "updated" : "created";
-      const oldKeys = permissionDoc ? permissionDoc.key.join(", ") : "None";
 
       if (!permissionDoc) {
         
@@ -238,17 +237,32 @@ class Service {
               action: "created",
               changedBy: new Types.ObjectId(creatorId),
               changes: `Initial permissions: ${requestedPermissions.join(", ")}`,
+              added: requestedPermissions,
+              removed: [],
             },
           ],
         });
 
         await permissionDoc.save({ session });
 
-      
+        
         targetUser.permissions = permissionDoc._id as any;
         await targetUser.save({ session });
       } else {
-    
+        
+        const oldKeysArray = [...permissionDoc.key];
+
+        
+        const addedPermissions = requestedPermissions.filter(
+          (p) => !oldKeysArray.includes(p as any)
+        );
+
+      
+        const removedPermissions = oldKeysArray.filter(
+          (p) => !requestedPermissions.includes(p as any)
+        );
+
+        
         permissionDoc.key = requestedPermissions;
         if (note) permissionDoc.note = note;
         permissionDoc.createdBy = new Types.ObjectId(creatorId) as any;
@@ -258,13 +272,16 @@ class Service {
           action: "updated",
           changedBy: new Types.ObjectId(creatorId),
           timestamp: new Date(),
-          changes: `Changed from [${oldKeys}] to [${requestedPermissions.join(", ")}]`,
+          changes: `Changed from [${oldKeysArray.join(", ")}] to [${requestedPermissions.join(", ")}]`,
+          added: addedPermissions,
+          removed: removedPermissions,
         });
 
         await permissionDoc.save({ session });
       }
 
       await session.commitTransaction();
+
       return {
         success: true,
         message: `Permissions ${actionType} successfully`,

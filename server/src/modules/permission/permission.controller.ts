@@ -21,7 +21,7 @@ class Controller extends BaseController {
       const data = await PermissionService.CreateAndUpdatePermissions(
         userId,
         permissions,
-        req.user._id,
+        req.user.id,
         note
       );
       this.sendResponse(res, {

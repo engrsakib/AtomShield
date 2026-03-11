@@ -49,6 +49,11 @@ const permissionSchema = new Schema(
         changes: {
           type: String,
         },
+        added: {
+          type: [String],
+        },        removed: {
+          type: [String],
+        },
       },
     ],  
   },
