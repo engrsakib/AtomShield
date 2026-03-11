@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  atom_shield_api:
+    build: .
+    container_name: atom_shield_server
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    restart: always
