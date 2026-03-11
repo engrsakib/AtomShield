@@ -8,10 +8,12 @@ import "./events/index";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { corsOptions } from "./config/corsOptions";
+import { globalLimiter } from "./middlewares/rateLimiter";
 
 dotenv.config();
 
 const app = express();
+app.use(globalLimiter);
 
 // middlewares
 app.use(cors(corsOptions));

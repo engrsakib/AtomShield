@@ -10,6 +10,7 @@ import { loginValidation } from "@/common/validators/login.validator";
 import { changePasswordValidation } from "@/common/validators/change-password-validator";
 import { resetPasswordValidation } from "@/common/validators/reset-password-validator";
 import { PermissionEnum } from "../permission/permission.enum";
+import { otpLimiter } from "@/middlewares/rateLimiter";
 
 const router = Router();
 
@@ -47,6 +48,7 @@ router.post(
 router.post(
   "/resend-otp",
   validateRequest(otpValidations.resendOtp),
+  otpLimiter,
   loggerMiddleware,
   AdminController.resendVerificationOtp
 );
