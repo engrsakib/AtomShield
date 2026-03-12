@@ -12,11 +12,14 @@ import {
   Loader2,
   AlertCircle,
   ChevronDown,
-  Lock, // আগের ডিজাইনের জন্য Lock আইকন
+  Lock,
+  ShieldAlert,
+  ArrowLeft,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
 import { ENV } from "@/config/env";
+import Link from "next/link";
 
 function getCookie(name: string) {
   if (typeof document === "undefined") return null;
@@ -31,23 +34,17 @@ export default function ViewAllYouTubeVideos() {
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasPermission, setHasPermission] = useState(true); // পারমিশন স্টেট
+  const [hasPermission, setHasPermission] = useState(true);
 
-  // Pagination + Limit Filter
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Search Filter
   const [searchTerm, setSearchTerm] = useState("");
   const [searchInput, setSearchInput] = useState("");
 
-  // Collapse Filter Panel
   const [showFilter, setShowFilter] = useState(false);
 
-  // ==============================
-  // Fetch Videos
-  // ==============================
   const fetchVideos = async () => {
     try {
       setLoading(true);
@@ -65,7 +62,6 @@ export default function ViewAllYouTubeVideos() {
 
       const data = await res.json();
 
-      // ৪0৩ চেক (Forbidden)
       if (res.status === 403 || data.statusCode === 403) {
         setHasPermission(false);
         setLoading(false);
@@ -87,17 +83,11 @@ export default function ViewAllYouTubeVideos() {
     fetchVideos();
   }, [page, limit, searchTerm]);
 
-  // ==============================
-  // Search Handler
-  // ==============================
   const handleSearch = () => {
     setSearchTerm(searchInput);
     setPage(1);
   };
 
-  // ==============================
-  // Publish / Unpublish
-  // ==============================
   const updatePublishStatus = async (video_number: number, newValue: string) => {
     try {
       const token = getCookie("access_token");
@@ -123,10 +113,7 @@ export default function ViewAllYouTubeVideos() {
       Swal.fire({
         icon: "success",
         title: "Success",
-        text:
-          newValue === "true"
-            ? "Video published successfully"
-            : "Video unpublished successfully",
+        text: newValue === "true" ? "Video published successfully" : "Video unpublished successfully",
         timer: 1500,
         showConfirmButton: false,
       });
@@ -137,9 +124,6 @@ export default function ViewAllYouTubeVideos() {
     }
   };
 
-  // ==============================
-  // Delete Video
-  // ==============================
   const deleteVideo = async (video_number: number, title: string) => {
     const confirm = await Swal.fire({
       icon: "warning",
@@ -180,33 +164,43 @@ export default function ViewAllYouTubeVideos() {
     }
   };
 
-  // Permission Denied View (হুবহু আগের ডিজাইনে)
+  // ============================
+  // PERMISSION DENIED UI (Admin List ডিজাইন অনুযায়ী)
+  // ============================
   if (!hasPermission) {
     return (
-      <div className="min-h-[80vh] flex flex-col justify-center items-center p-4">
-        <div className="max-w-lg p-10 text-center border-2 border-red-200 shadow-xl bg-red-50 rounded-3xl">
-          <div className="flex items-center justify-center w-24 h-24 mx-auto mb-6 bg-red-100 rounded-full">
-            <Lock className="w-12 h-12 text-red-600" />
+      <div className="flex flex-col items-center justify-center min-h-[85vh] p-6 text-center">
+        <div className="relative mb-8">
+          <div className="absolute inset-0 bg-pink-200 rounded-full opacity-30 blur-3xl animate-pulse"></div>
+          <div className="relative flex items-center justify-center w-32 h-32 bg-white border border-gray-100 shadow-2xl rounded-[3rem]">
+            <Lock className="w-16 h-16 text-pink-600" />
           </div>
-          <h1 className="mb-4 text-3xl font-bold text-red-700">
-            Permission Denied
-          </h1>
-          <p className="mb-8 text-lg text-red-600">
-            You do not have permission to view this content. Please contact your
-            administrator for access.
-          </p>
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="px-8 py-3 font-bold text-white transition-all bg-red-600 shadow-lg rounded-xl hover:bg-red-700"
+          <ShieldAlert className="absolute w-12 h-12 -bottom-2 -right-2 text-amber-500 animate-bounce" />
+        </div>
+
+        <h2 className="mb-4 text-5xl font-black tracking-tighter text-gray-900">Access Denied!</h2>
+        <p className="max-w-md mb-10 text-lg font-medium leading-relaxed text-gray-500">
+          Sorry, you don't have enough permission to view this video list. Please contact your founder or system administrator.
+        </p>
+
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <button 
+            onClick={() => router.back()}
+            className="flex items-center justify-center gap-2 px-10 py-4 font-bold text-gray-700 transition-all bg-white border-2 border-gray-100 shadow-sm rounded-2xl hover:bg-gray-50 active:scale-95"
           >
-            Back to Dashboard
+            <ArrowLeft className="w-5 h-5" /> Go Back
           </button>
+          
+          <Link href="/dashboard">
+            <button className="px-12 py-4 font-bold text-white transition-all bg-gray-900 shadow-xl rounded-2xl hover:bg-black active:scale-95">
+              Return Dashboard
+            </button>
+          </Link>
         </div>
       </div>
     );
   }
 
-  // Loading Screen
   if (loading && videos.length === 0)
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -217,7 +211,6 @@ export default function ViewAllYouTubeVideos() {
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-teal-50 to-emerald-50">
       <div className="max-w-full mx-auto">
-
         {/* HEADER */}
         <div className="flex items-center justify-between p-6 mb-6 text-white shadow-lg bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl">
           <div className="flex items-center gap-4">
@@ -236,17 +229,11 @@ export default function ViewAllYouTubeVideos() {
             className="flex items-center justify-between w-full p-4 font-semibold text-left text-gray-700"
           >
             <span>Advanced Filters</span>
-            <ChevronDown
-              className={`transition-transform ${
-                showFilter ? "rotate-180" : ""
-              }`}
-            />
+            <ChevronDown className={`transition-transform ${showFilter ? "rotate-180" : ""}`} />
           </button>
 
           {showFilter && (
             <div className="grid grid-cols-1 gap-4 p-4 border-t md:grid-cols-3">
-
-              {/* Page Selector */}
               <div>
                 <label className="font-semibold text-gray-600">Page</label>
                 <input
@@ -257,8 +244,6 @@ export default function ViewAllYouTubeVideos() {
                   className="w-full p-2 mt-1 border rounded-xl"
                 />
               </div>
-
-              {/* Limit Selector */}
               <div>
                 <label className="font-semibold text-gray-600">Limit</label>
                 <select
@@ -272,8 +257,6 @@ export default function ViewAllYouTubeVideos() {
                   <option value={50}>50</option>
                 </select>
               </div>
-
-              {/* Search Input */}
               <div>
                 <label className="font-semibold text-gray-600">Search</label>
                 <input
@@ -290,7 +273,6 @@ export default function ViewAllYouTubeVideos() {
                   Apply
                 </button>
               </div>
-
             </div>
           )}
         </div>
@@ -315,7 +297,6 @@ export default function ViewAllYouTubeVideos() {
                 <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
-
             <tbody>
               {videos.map((v: any) => (
                 <tr key={v.video_number} className="border-b hover:bg-gray-50">
@@ -326,7 +307,6 @@ export default function ViewAllYouTubeVideos() {
                       className="object-cover w-24 h-16 rounded-lg"
                     />
                   </td>
-
                   <td className="p-4">
                     <p className="font-semibold">{v.title}</p>
                     <div
@@ -334,7 +314,6 @@ export default function ViewAllYouTubeVideos() {
                       dangerouslySetInnerHTML={{ __html: v.description }}
                     ></div>
                   </td>
-
                   <td className="p-4">
                     <button
                       onClick={() => window.open(v.video_url, "_blank")}
@@ -343,33 +322,24 @@ export default function ViewAllYouTubeVideos() {
                       <Play className="inline w-4 h-4 mr-1" /> Play
                     </button>
                   </td>
-
                   <td className="p-4">
                     <select
                       value={v.is_published ? "true" : "false"}
-                      onChange={(e) =>
-                        updatePublishStatus(v.video_number, e.target.value)
-                      }
+                      onChange={(e) => updatePublishStatus(v.video_number, e.target.value)}
                       className="p-2 bg-white border rounded-lg"
                     >
                       <option value="true">Published</option>
                       <option value="false">Unpublished</option>
                     </select>
                   </td>
-
                   <td className="p-4">
                     <div className="flex justify-center gap-3">
                         <button
-                          onClick={() =>
-                            router.push(
-                              `/dashboard/youtube/update?video=${v.video_number}`
-                            )
-                          }
+                          onClick={() => router.push(`/dashboard/youtube/update?video=${v.video_number}`)}
                           className="p-2 text-green-600 bg-green-100 rounded-lg"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
-
                         <button
                           onClick={() => deleteVideo(v.video_number, v.title)}
                           className="p-2 text-red-600 bg-red-100 rounded-lg"
@@ -392,11 +362,7 @@ export default function ViewAllYouTubeVideos() {
             >
               <ChevronLeft />
             </button>
-
-            <span>
-              Page {page} of {totalPages}
-            </span>
-
+            <span>Page {page} of {totalPages}</span>
             <button
               disabled={page === totalPages}
               onClick={() => setPage(page + 1)}
