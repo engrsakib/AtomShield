@@ -11,9 +11,10 @@ import {
   ShieldCheck,
   User,
   ShieldAlert,
+  Lock,
+  ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
-import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
 import UpdateAdminModal from "./UpdateModal";
 import ProfileModal from "./ProfileModal";
@@ -37,41 +38,13 @@ interface PaginationMeta {
 
 // --- Role UI Configuration ---
 const roleConfig: Record<string, { gradient: string; label: string; icon: any }> = {
-  admin: { 
-    gradient: "from-blue-600 to-indigo-700", 
-    label: "Admin", 
-    icon: ShieldCheck 
-  },
-  super_admin: { 
-    gradient: "from-purple-600 to-fuchsia-700", 
-    label: "Super Admin", 
-    icon: ShieldAlert 
-  },
-  manager: { 
-    gradient: "from-rose-500 to-pink-600", 
-    label: "Manager", 
-    icon: User 
-  },
-  moderator: { 
-    gradient: "from-orange-500 to-amber-600", 
-    label: "Moderator", 
-    icon: User 
-  },
-  founder: { 
-    gradient: "from-yellow-500 to-orange-600", 
-    label: "Founder", 
-    icon: ShieldCheck 
-  },
-  agent: { 
-    gradient: "from-green-500 to-teal-600", 
-    label: "Agent", 
-    icon: User 
-  },
-  student: { 
-    gradient: "from-slate-500 to-slate-700", 
-    label: "Student", 
-    icon: User 
-  },
+  admin: { gradient: "from-blue-600 to-indigo-700", label: "Admin", icon: ShieldCheck },
+  super_admin: { gradient: "from-purple-600 to-fuchsia-700", label: "Super Admin", icon: ShieldAlert },
+  manager: { gradient: "from-rose-500 to-pink-600", label: "Manager", icon: User },
+  moderator: { gradient: "from-orange-500 to-amber-600", label: "Moderator", icon: User },
+  founder: { gradient: "from-yellow-500 to-orange-600", label: "Founder", icon: ShieldCheck },
+  agent: { gradient: "from-green-500 to-teal-600", label: "Agent", icon: User },
+  student: { gradient: "from-slate-500 to-slate-700", label: "Student", icon: User },
 };
 
 const RoleBadge = ({ role }: { role: string }) => {
@@ -81,9 +54,7 @@ const RoleBadge = ({ role }: { role: string }) => {
     label: role?.toUpperCase() || "USER",
     icon: User
   };
-
   const Icon = config.icon;
-
   return (
     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold text-white shadow-sm bg-gradient-to-r ${config.gradient} uppercase tracking-wider`}>
       <Icon className="w-3 h-3" />
@@ -95,6 +66,7 @@ const RoleBadge = ({ role }: { role: string }) => {
 export default function AdminList() {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
+  const [permissionError, setPermissionError] = useState(false); // 403 হ্যান্ডেল করার জন্য স্টেট
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -111,9 +83,18 @@ export default function AdminList() {
     role: "",
   });
 
+  const getCookie = (name: string) => {
+    if (typeof document === "undefined") return null;
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(";").shift() || null;
+    return null;
+  };
+
   const fetchAdmins = useCallback(async () => {
     try {
       setLoading(true);
+      setPermissionError(false); // লোড করার আগে এরর রিসেট
       const accessToken = getCookie("access_token");
       if (!accessToken) {
         router.push("/login");
@@ -132,13 +113,24 @@ export default function AdminList() {
         cache: "no-store",
       });
 
+      // API যদি সরাসরি 403 স্ট্যাটাস কোড দেয়
+      if (res.status === 403) {
+        setPermissionError(true);
+        setLoading(false);
+        return;
+      }
+
       if (res.status === 401) {
         router.push("/login");
         return;
       }
 
       const json = await res.json();
-      if (json.success) {
+
+      // বডিতে যদি statusCode 403 থাকে
+      if (json.statusCode === 403 || !json.success && json.message?.includes("Forbidden")) {
+        setPermissionError(true);
+      } else if (json.success) {
         setAdmins(json.data.data || json.data);
         if (json.data.meta) setPaginationMeta(json.data.meta);
       }
@@ -153,13 +145,36 @@ export default function AdminList() {
     fetchAdmins();
   }, [filters.strat, filters.limit, filters.role]);
 
-  // Helper function to get cookie (Simplified)
-  function getCookie(name: string) {
-    if (typeof document === "undefined") return null;
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(";").shift() || null;
-    return null;
+  // --- 403 Forbidden এর জন্য সুন্দর ডিজাইন ---
+  if (permissionError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[85vh] p-6 text-center">
+        <div className="relative mb-8">
+          <div className="absolute inset-0 bg-pink-200 rounded-full opacity-30 blur-3xl animate-pulse"></div>
+          <div className="relative flex items-center justify-center w-32 h-32 bg-white border border-gray-100 shadow-2xl rounded-[3rem]">
+            <Lock className="w-16 h-16 text-pink-600" />
+          </div>
+          <ShieldAlert className="absolute w-12 h-12 -bottom-2 -right-2 text-amber-500 animate-bounce" />
+        </div>
+        <h2 className="mb-4 text-5xl font-black tracking-tighter text-gray-900">Access Denied!</h2>
+        <p className="max-w-md mb-10 text-lg font-medium leading-relaxed text-gray-500">
+          Sorry, you don't have enough permission to view this list. Please contact your founder or system administrator.
+        </p>
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <button 
+            onClick={() => router.back()}
+            className="flex items-center justify-center gap-2 px-10 py-4 font-bold text-gray-700 transition-all bg-white border-2 border-gray-100 shadow-sm rounded-2xl hover:bg-gray-50 active:scale-95"
+          >
+            <ArrowLeft className="w-5 h-5" /> Go Back
+          </button>
+          <Link href="/dashboard">
+            <button className="px-12 py-4 font-bold text-white transition-all bg-gray-900 shadow-xl rounded-2xl hover:bg-black active:scale-95">
+              Return Dashboard
+            </button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -288,7 +303,6 @@ export default function AdminList() {
                        >
                          <MoreVertical className="w-5 h-5" />
                        </button>
-                       {/* Dropdown Menu (Simplified Logic) */}
                        {activeDropdown === admin._id && (
                          <div className="absolute z-50 w-48 py-2 mt-2 duration-200 bg-white border border-gray-100 shadow-xl right-12 rounded-2xl animate-in fade-in zoom-in">
                             <button onClick={() => setProfileModal(admin._id)} className="w-full px-4 py-2 text-sm font-bold text-left text-gray-700 transition-all hover:bg-pink-50 hover:text-pink-600">View Profile</button>
@@ -307,7 +321,6 @@ export default function AdminList() {
         )}
       </div>
 
-      {/* Modals remain same but with better styling hooks */}
       {updateModal && (
         <UpdateAdminModal admin={updateModal} onClose={() => setUpdateModal(null)} onUpdated={fetchAdmins} />
       )}
