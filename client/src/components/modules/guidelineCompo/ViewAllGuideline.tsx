@@ -11,6 +11,9 @@ import {
   Filter,
   ChevronDown,
   ChevronUp,
+  Lock,
+  ShieldAlert,
+  ArrowLeft,
 } from "lucide-react";
 
 import Swal from "sweetalert2";
@@ -18,19 +21,21 @@ import { ENV } from "@/config/env";
 import getCookie from "@/util/GetCookie";
 import { useRouter } from "next/navigation";
 import DOMPurify from "dompurify";
+import Link from "next/link";
 
 export default function ViewAllGuideline() {
   const router = useRouter();
 
   const [guidelines, setGuidelines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasPermission, setHasPermission] = useState(true); // পারমিশন স্টেট
 
   // Search Filter
   const [searchTerm, setSearchTerm] = useState("");
 
   // Pagination
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10); // NEW
+  const [limit, setLimit] = useState(10);
   const [totalPage, setTotalPage] = useState(1);
 
   // Collapse filter section
@@ -38,10 +43,7 @@ export default function ViewAllGuideline() {
 
   const fetchGuidelines = async () => {
     setLoading(true);
-
     const url = `${ENV.BASE_URL}/guideline?page=${page}&limit=${limit}&searchTerm=${searchTerm}`;
-
-    console.log("API CALL URL:", url);
 
     try {
       const res = await fetch(url, {
@@ -51,7 +53,13 @@ export default function ViewAllGuideline() {
       });
 
       const data = await res.json();
-      console.log("SEARCH FILTER RESULT:", data);
+
+      // ৪0৩ চেক (Forbidden)
+      if (res.status === 403 || data.statusCode === 403) {
+        setHasPermission(false);
+        setLoading(false);
+        return;
+      }
 
       if (res.ok) {
         setGuidelines(data.data.data);
@@ -64,18 +72,15 @@ export default function ViewAllGuideline() {
     setLoading(false);
   };
 
-  // Auto fetch on page change
   useEffect(() => {
     fetchGuidelines();
   }, [page, limit]);
 
-  // Search button click
   const handleSearchClick = () => {
     setPage(1);
     fetchGuidelines();
   };
 
-  // Press enter to search
   const handleSearchEnter = (e: any) => {
     if (e.key === "Enter") {
       setPage(1);
@@ -83,7 +88,6 @@ export default function ViewAllGuideline() {
     }
   };
 
-  // DELETE GUIDELINE
   const deleteGuideline = async (guidelineNumber: number) => {
     Swal.fire({
       title: "Delete?",
@@ -92,10 +96,15 @@ export default function ViewAllGuideline() {
       showCancelButton: true,
     }).then(async (result) => {
       if (result.isConfirmed) {
-        await fetch(`${ENV.BASE_URL}/guideline/${guidelineNumber}`, {
+        const res = await fetch(`${ENV.BASE_URL}/guideline/${guidelineNumber}`, {
           method: "DELETE",
           headers: { Authorization: getCookie("access_token") || "" },
         });
+
+        if (res.status === 403) {
+          Swal.fire("Forbidden", "You don't have permission to delete", "error");
+          return;
+        }
 
         Swal.fire("Deleted!", "", "success");
         fetchGuidelines();
@@ -103,31 +112,70 @@ export default function ViewAllGuideline() {
     });
   };
 
-  // UPDATE STATUS
   const toggleStatus = async (guidelineNumber: number) => {
-    await fetch(`${ENV.BASE_URL}/guideline/${guidelineNumber}`, {
+    const res = await fetch(`${ENV.BASE_URL}/guideline/${guidelineNumber}`, {
       method: "PATCH",
       headers: { Authorization: getCookie("access_token") || "" },
     });
+
+    if (res.status === 403) {
+      Swal.fire("Forbidden", "You don't have permission to update status", "error");
+      return;
+    }
 
     Swal.fire("Updated!", "Status updated", "success");
     fetchGuidelines();
   };
 
+  // ============================
+  // PERMISSION DENIED UI
+  // ============================
+  if (!hasPermission) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[85vh] p-6 text-center">
+        <div className="relative mb-8">
+          <div className="absolute inset-0 bg-pink-200 rounded-full opacity-30 blur-3xl animate-pulse"></div>
+          <div className="relative flex items-center justify-center w-32 h-32 bg-white border border-gray-100 shadow-2xl rounded-[3rem]">
+            <Lock className="w-16 h-16 text-pink-600" />
+          </div>
+          <ShieldAlert className="absolute w-12 h-12 -bottom-2 -right-2 text-amber-500 animate-bounce" />
+        </div>
+
+        <h2 className="mb-4 text-5xl font-black tracking-tighter text-gray-900">Access Denied!</h2>
+        <p className="max-w-md mb-10 text-lg font-medium leading-relaxed text-gray-500">
+          Sorry, you don't have enough permission to view this guideline list. Please contact your founder or system administrator.
+        </p>
+
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <button 
+            onClick={() => router.back()}
+            className="flex items-center justify-center gap-2 px-10 py-4 font-bold text-gray-700 transition-all bg-white border-2 border-gray-100 shadow-sm rounded-2xl hover:bg-gray-50 active:scale-95"
+          >
+            <ArrowLeft className="w-5 h-5" /> Go Back
+          </button>
+          
+          <Link href="/dashboard">
+            <button className="px-12 py-4 font-bold text-white transition-all bg-gray-900 shadow-xl rounded-2xl hover:bg-black active:scale-95">
+              Return Dashboard
+            </button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 min-h-screen bg-gradient-to-br from-teal-50 to-emerald-50">
+    <div className="min-h-screen p-6 bg-gradient-to-br from-teal-50 to-emerald-50">
       {/* HEADER */}
-      <div className="bg-gradient-to-r from-teal-600 to-emerald-600 text-white p-6 rounded-2xl shadow-lg mb-6">
+      <div className="p-6 mb-6 text-white shadow-lg bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl">
         <h1 className="text-3xl font-bold">All Guidelines</h1>
         <p className="text-teal-100">Browse and manage guidelines</p>
       </div>
 
       {/* SEARCH BAR */}
-      <div className="bg-white rounded-xl shadow-md p-5 space-y-4">
-        {/* Search Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* SEARCH INPUT */}
-          <div className="flex items-center gap-2 border rounded-xl px-3">
+      <div className="p-5 space-y-4 bg-white shadow-md rounded-xl">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="flex items-center gap-2 px-3 border rounded-xl">
             <Search />
             <input
               type="text"
@@ -135,22 +183,20 @@ export default function ViewAllGuideline() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={handleSearchEnter}
-              className="py-3 outline-none w-full"
+              className="w-full py-3 outline-none"
             />
           </div>
 
-          {/* SEARCH BUTTON */}
           <button
             onClick={handleSearchClick}
-            className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl px-4 py-3 font-semibold"
+            className="px-4 py-3 font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-xl"
           >
             Search
           </button>
 
-          {/* FILTER COLLAPSE BUTTON */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center justify-center gap-2 border rounded-xl px-4 py-3 text-teal-700 font-semibold"
+            className="flex items-center justify-center gap-2 px-4 py-3 font-semibold text-teal-700 border rounded-xl"
           >
             <Filter size={18} />
             Pagination
@@ -158,10 +204,8 @@ export default function ViewAllGuideline() {
           </button>
         </div>
 
-        {/* COLLAPSIBLE FILTER SECTION */}
         {showFilters && (
-          <div className="border rounded-xl p-4 bg-gray-50 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* PAGE Selector */}
+          <div className="grid grid-cols-1 gap-4 p-4 border rounded-xl bg-gray-50 md:grid-cols-3">
             <div>
               <label className="font-semibold">Page</label>
               <input
@@ -169,17 +213,16 @@ export default function ViewAllGuideline() {
                 min={1}
                 value={page}
                 onChange={(e) => setPage(Number(e.target.value))}
-                className="w-full border rounded-xl p-3 mt-1"
+                className="w-full p-3 mt-1 border rounded-xl"
               />
             </div>
 
-            {/* LIMIT Selector */}
             <div>
               <label className="font-semibold">Limit</label>
               <select
                 value={limit}
                 onChange={(e) => setLimit(Number(e.target.value))}
-                className="w-full border rounded-xl p-3 mt-1"
+                className="w-full p-3 mt-1 border rounded-xl"
               >
                 <option value={5}>5</option>
                 <option value={10}>10</option>
@@ -188,14 +231,13 @@ export default function ViewAllGuideline() {
               </select>
             </div>
 
-            {/* APPLY BUTTON */}
             <div className="flex items-end">
               <button
                 onClick={() => {
                   setPage(1);
                   fetchGuidelines();
                 }}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 py-3 font-semibold"
+                className="w-full px-4 py-3 font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl"
               >
                 Apply Filters
               </button>
@@ -205,9 +247,9 @@ export default function ViewAllGuideline() {
       </div>
 
       {/* TABLE */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden mt-6">
+      <div className="mt-6 overflow-hidden bg-white shadow-lg rounded-xl">
         <table className="w-full">
-          <thead className="bg-teal-600 text-white">
+          <thead className="text-white bg-teal-600">
             <tr>
               <th className="py-3">ID</th>
               <th className="py-3 text-left">Title</th>
@@ -220,27 +262,27 @@ export default function ViewAllGuideline() {
           <tbody>
             {loading ? (
               <tr>
-                <td className="text-center py-6 text-gray-500" colSpan={6}>
+                <td className="py-6 text-center text-gray-500" colSpan={6}>
                   Loading...
                 </td>
               </tr>
             ) : guidelines.length === 0 ? (
               <tr>
-                <td className="text-center py-6 text-gray-500" colSpan={6}>
+                <td className="py-6 text-center text-gray-500" colSpan={6}>
                   No guidelines found
                 </td>
               </tr>
             ) : (
               guidelines.map((item) => (
                 <tr key={item.guideline_number} className="border-b">
-                  <td className="text-center py-4 font-semibold">
+                  <td className="py-4 font-semibold text-center">
                     #{item.guideline_number}
                   </td>
 
                   <td className="py-4">
                     <div className="font-bold">{item.title}</div>
                     <div
-                      className="text-gray-500 text-sm prose max-w-none"
+                      className="text-sm prose text-gray-500 max-w-none"
                       dangerouslySetInnerHTML={{
                         __html: DOMPurify.sanitize(item.description),
                       }}
@@ -248,7 +290,7 @@ export default function ViewAllGuideline() {
                   </td>
 
                   <td className="text-center">
-                    <span className="px-3 py-1 text-sm rounded-full bg-purple-100 text-purple-600">
+                    <span className="px-3 py-1 text-sm text-purple-600 bg-purple-100 rounded-full">
                       {item.category.replace(/_/g, " ").toUpperCase()}
                     </span>
                   </td>
@@ -269,36 +311,32 @@ export default function ViewAllGuideline() {
                     <div className="flex justify-center gap-2">
                       <button
                         onClick={() =>
-                          router.push(
-                            `/dashboard/guideline/view-guideline/${item.guideline_number}`,
-                          )
+                          router.push(`/dashboard/guideline/view-guideline/${item.guideline_number}`)
                         }
-                        className="p-2 bg-blue-100 text-blue-600 rounded-lg"
+                        className="p-2 text-blue-600 bg-blue-100 rounded-lg"
                       >
                         <Eye size={18} />
                       </button>
 
                       <button
                         onClick={() =>
-                          router.push(
-                            `/dashboard/guideline/edit/${item.guideline_number}`,
-                          )
+                          router.push(`/dashboard/guideline/edit/${item.guideline_number}`)
                         }
-                        className="p-2 bg-green-100 text-green-600 rounded-lg"
+                        className="p-2 text-green-600 bg-green-100 rounded-lg"
                       >
                         <Edit size={18} />
                       </button>
 
                       <button
                         onClick={() => toggleStatus(item.guideline_number)}
-                        className="p-2 bg-teal-100 text-teal-600 rounded-lg"
+                        className="p-2 text-teal-600 bg-teal-100 rounded-lg"
                       >
                         ✓
                       </button>
 
                       <button
                         onClick={() => deleteGuideline(item.guideline_number)}
-                        className="p-2 bg-red-100 text-red-600 rounded-lg"
+                        className="p-2 text-red-600 bg-red-100 rounded-lg"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -311,8 +349,8 @@ export default function ViewAllGuideline() {
         </table>
 
         {/* PAGINATION */}
-        <div className="flex justify-between items-center p-4">
-          <span className="text-gray-600 text-sm">
+        <div className="flex items-center justify-between p-4">
+          <span className="text-sm text-gray-600">
             Showing {guidelines.length} results
           </span>
 
@@ -325,7 +363,7 @@ export default function ViewAllGuideline() {
               <ChevronLeft />
             </button>
 
-            <span className="px-4 py-2 bg-teal-600 text-white rounded-lg">
+            <span className="px-4 py-2 text-white bg-teal-600 rounded-lg">
               {page}
             </span>
 
