@@ -59,41 +59,41 @@ interface Filters {
 }
 
 type RoleType =
-  | "admin"
-  | "super_admin"
-  | "moderator"
-  | "content_manager"
-  | "user"
-  | "founder";
+  | "ADMIN"
+  | "MANAGER"
+  | "AGENT"
+  | "CUSTOMER"
+  | "STUDENT"
+  | "FOUNDER";
 
 // Role-based gradient colors with proper typing
 const roleGradients: Record<RoleType, string> = {
-  admin: "bg-gradient-to-r from-blue-500 to-purple-600",
-  super_admin: "bg-gradient-to-r from-red-500 to-pink-600",
-  moderator: "bg-gradient-to-r from-green-500 to-teal-600",
-  content_manager: "bg-gradient-to-r from-orange-500 to-red-500",
-  user: "bg-gradient-to-r from-gray-500 to-gray-700",
-  founder: "bg-gradient-to-r from-yellow-500 to-orange-500",
+  ADMIN: "bg-gradient-to-r from-blue-500 to-purple-600",
+  MANAGER: "bg-gradient-to-r from-red-500 to-pink-600",
+  AGENT: "bg-gradient-to-r from-green-500 to-teal-600",
+  CUSTOMER: "bg-gradient-to-r from-orange-500 to-red-500",
+  STUDENT: "bg-gradient-to-r from-gray-500 to-gray-700",
+  FOUNDER: "bg-gradient-to-r from-yellow-500 to-orange-500",
 };
 
 // Role-based text colors
 const roleTextColors: Record<RoleType, string> = {
-  admin: "text-white",
-  super_admin: "text-white",
-  moderator: "text-white",
-  content_manager: "text-white",
-  user: "text-white",
-  founder: "text-white",
+  ADMIN: "text-white",
+  MANAGER: "text-white",
+  AGENT: "text-white",
+  CUSTOMER: "text-white",
+  STUDENT: "text-white",
+  FOUNDER: "text-white",
 };
 
 // Role display names
 const roleDisplayNames: Record<RoleType, string> = {
-  admin: "Admin",
-  super_admin: "Super Admin",
-  moderator: "Moderator",
-  content_manager: "Content Manager",
-  user: "User",
-  founder: "Founder",
+  ADMIN: "Admin",
+  MANAGER: "Manager",
+  AGENT: "Agent",
+  CUSTOMER: "Customer",
+  STUDENT: "Student",
+  FOUNDER: "Founder",
 };
 
 // Role badge component with proper typing
@@ -345,10 +345,10 @@ export default function AdminList() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen p-4 bg-gray-50 md:p-6 lg:p-8">
       {/* Header */}
       <div className="mb-6 md:mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+        <h1 className="mb-2 text-3xl font-bold text-gray-900 md:text-4xl">
           Admin Management
         </h1>
         <p className="text-gray-600">
@@ -357,12 +357,12 @@ export default function AdminList() {
       </div>
 
       {/* Filter Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex flex-col sm:flex-row gap-3 flex-1">
+      <div className="p-4 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm md:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col flex-1 gap-3 sm:flex-row">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
               <input
                 type="text"
                 placeholder="Search by name or phone..."
@@ -415,15 +415,15 @@ export default function AdminList() {
 
         {/* Expanded Filters */}
         {showFilters && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-200">
+          <div className="grid grid-cols-1 gap-4 pt-4 mt-4 border-t border-gray-200 sm:grid-cols-2 lg:grid-cols-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block mb-1 text-sm font-medium text-gray-700">
                 Start From
               </label>
               <input
                 type="number"
                 min="1"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-800 focus:border-transparent outline-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent"
                 value={filters.strat}
                 onChange={(e) =>
                   setFilters({ ...filters, strat: Number(e.target.value) })
@@ -432,11 +432,11 @@ export default function AdminList() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block mb-1 text-sm font-medium text-gray-700">
                 Limit
               </label>
               <select
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-800 focus:border-transparent outline-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent"
                 value={filters.limit}
                 onChange={(e) =>
                   setFilters({ ...filters, limit: Number(e.target.value) })
@@ -450,11 +450,11 @@ export default function AdminList() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block mb-1 text-sm font-medium text-gray-700">
                 Role
               </label>
               <select
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-800 focus:border-transparent outline-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-green-800 focus:border-transparent"
                 value={filters.role}
                 onChange={(e) =>
                   setFilters({ ...filters, role: e.target.value })
@@ -474,42 +474,42 @@ export default function AdminList() {
       </div>
 
       {/* Table Section */}
-      <div className="bg-white min-h-screen rounded-lg shadow-sm border border-gray-200">
+      <div className="min-h-screen bg-white border border-gray-200 rounded-lg shadow-sm">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-12 h-12 text-green-800 animate-spin mb-4" />
+            <Loader2 className="w-12 h-12 mb-4 text-green-800 animate-spin" />
             <p className="text-gray-600">Loading admins...</p>
           </div>
         ) : admins.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <div className="flex items-center justify-center w-16 h-16 mb-4 bg-gray-100 rounded-full">
               <Search className="w-8 h-8 text-gray-400" />
             </div>
-            <p className="text-gray-600 text-lg">No admins found</p>
-            <p className="text-gray-400 text-sm mt-1">
+            <p className="text-lg text-gray-600">No admins found</p>
+            <p className="mt-1 text-sm text-gray-400">
               Try adjusting your search or filters
             </p>
           </div>
         ) : (
           <>
             {/* Desktop Table */}
-            <div className="hidden min-h-screen md:block overflow-x-auto rounded-lg">
+            <div className="hidden min-h-screen overflow-x-auto rounded-lg md:block">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="border-b border-gray-200 bg-gray-50">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-xs font-semibold tracking-wider text-left text-gray-700 uppercase">
                       Admin
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-xs font-semibold tracking-wider text-left text-gray-700 uppercase">
                       Phone Number
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-xs font-semibold tracking-wider text-left text-gray-700 uppercase">
                       Role
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-xs font-semibold tracking-wider text-left text-gray-700 uppercase">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-xs font-semibold tracking-wider text-center text-gray-700 uppercase">
                       Actions
                     </th>
                   </tr>
@@ -518,7 +518,7 @@ export default function AdminList() {
                   {admins.map((admin) => (
                     <tr
                       key={admin._id}
-                      className="hover:bg-gray-50 transition-colors"
+                      className="transition-colors hover:bg-gray-50"
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -528,7 +528,7 @@ export default function AdminList() {
                               "https://cdn-icons-png.flaticon.com/512/149/149071.png"
                             }
                             alt={admin.name}
-                            className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                            className="object-cover w-10 h-10 border-2 border-gray-200 rounded-full"
                           />
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-gray-900">
@@ -568,7 +568,7 @@ export default function AdminList() {
                                   activeDropdown === admin._id ? null : admin._id
                                 )
                               }
-                              className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center"
+                              className="flex items-center justify-center p-2 transition-colors rounded-lg hover:bg-gray-100"
                             >
                               <MoreVertical className="w-5 h-5 text-gray-600" />
                             </button>
@@ -584,7 +584,7 @@ export default function AdminList() {
                                       handleViewProfile(admin._id);
                                       setActiveDropdown(null);
                                     }}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    className="w-full px-4 py-2 text-sm text-left text-gray-700 transition-colors hover:bg-gray-50"
                                   >
                                     View Profile
                                   </button>
@@ -593,7 +593,7 @@ export default function AdminList() {
                                       handleManagePermission(admin._id);
                                       setActiveDropdown(null);
                                     }}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    className="w-full px-4 py-2 text-sm text-left text-gray-700 transition-colors hover:bg-gray-50"
                                   >
                                     Manage Permission
                                   </button>
@@ -602,7 +602,7 @@ export default function AdminList() {
                                       handleUpdate(admin);
                                       setActiveDropdown(null);
                                     }}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    className="w-full px-4 py-2 text-sm text-left text-gray-700 transition-colors hover:bg-gray-50"
                                   >
                                     Update
                                   </button>
@@ -611,7 +611,7 @@ export default function AdminList() {
                                       handleDelete(admin._id);
                                       setActiveDropdown(null);
                                     }}
-                                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                    className="w-full px-4 py-2 text-sm text-left text-red-600 transition-colors hover:bg-red-50"
                                   >
                                     Delete
                                   </button>
@@ -628,7 +628,7 @@ export default function AdminList() {
             </div>
 
             {/* Mobile Cards */}
-            <div className="md:hidden divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200 md:hidden">
               {admins.map((admin) => (
                 <div key={admin._id} className="p-4">
                   <div className="flex items-start justify-between mb-3">
@@ -639,7 +639,7 @@ export default function AdminList() {
                           "https://cdn-icons-png.flaticon.com/512/149/149071.png"
                         }
                         alt={admin.name}
-                        className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                        className="object-cover w-12 h-12 border-2 border-gray-200 rounded-full"
                       />
                       <div>
                         <div className="flex items-center gap-2">
@@ -664,7 +664,7 @@ export default function AdminList() {
                             activeDropdown === admin._id ? null : admin._id
                           )
                         }
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center"
+                        className="flex items-center justify-center p-2 transition-colors rounded-lg hover:bg-gray-100"
                       >
                         <MoreVertical className="w-5 h-5 text-gray-600" />
                       </button>
@@ -680,7 +680,7 @@ export default function AdminList() {
                                 handleViewProfile(admin._id);
                                 setActiveDropdown(null);
                               }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                              className="w-full px-4 py-2 text-sm text-left text-gray-700 transition-colors hover:bg-gray-50"
                             >
                               View Profile
                             </button>
@@ -689,7 +689,7 @@ export default function AdminList() {
                                 handleManagePermission(admin._id);
                                 setActiveDropdown(null);
                               }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                              className="w-full px-4 py-2 text-sm text-left text-gray-700 transition-colors hover:bg-gray-50"
                             >
                               Manage Permission
                             </button>
@@ -698,7 +698,7 @@ export default function AdminList() {
                                 handleUpdate(admin);
                                 setActiveDropdown(null);
                               }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                              className="w-full px-4 py-2 text-sm text-left text-gray-700 transition-colors hover:bg-gray-50"
                             >
                               Update
                             </button>
@@ -707,7 +707,7 @@ export default function AdminList() {
                                 handleDelete(admin._id);
                                 setActiveDropdown(null);
                               }}
-                              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                              className="w-full px-4 py-2 text-sm text-left text-red-600 transition-colors hover:bg-red-50"
                             >
                               Delete
                             </button>
@@ -716,7 +716,7 @@ export default function AdminList() {
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex flex-wrap gap-2">
                     <RoleBadge role={admin.role} />
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -737,7 +737,7 @@ export default function AdminList() {
 
       {/* Pagination Info */}
       {!loading && admins.length > 0 && paginationMeta && (
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="flex flex-col items-center justify-between gap-4 p-4 mt-6 bg-white border border-gray-200 rounded-lg shadow-sm sm:flex-row">
           {/* Info Section */}
           <div className="text-sm text-gray-600">
             Showing{" "}
@@ -760,7 +760,7 @@ export default function AdminList() {
             <button
               onClick={() => setFilters({ ...filters, strat: Math.max(1, filters.strat - filters.limit) })}
               disabled={paginationMeta.page <= 1}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
@@ -804,7 +804,7 @@ export default function AdminList() {
             <button
               onClick={() => setFilters({ ...filters, strat: filters.strat + filters.limit })}
               disabled={paginationMeta.page >= Math.ceil(paginationMeta.total / paginationMeta.limit)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>

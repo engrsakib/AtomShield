@@ -21,25 +21,25 @@ import { MdOutlineLeaderboard } from "react-icons/md";
 const links = [
   { name: "Dashboard", href: "/dashboard", icon: Trophy },
 
-  {
-    name: "Questions",
-    icon: GraduationCap,
-    basePath: "/dashboard/question",
-    subLinks: [
-      { name: "Create Question", href: "/dashboard/question/create-question" },
-      { name: "View All Question", href: "/dashboard/question/view-question" },
-    ],
-  },
+  // {
+  //   name: "Questions",
+  //   icon: GraduationCap,
+  //   basePath: "/dashboard/question",
+  //   subLinks: [
+  //     { name: "Create Question", href: "/dashboard/question/create-question" },
+  //     { name: "View All Question", href: "/dashboard/question/view-question" },
+  //   ],
+  // },
 
-  {
-    name: "Exam",
-    icon: GraduationCap,
-    basePath: "/dashboard/exam",
-    subLinks: [
-      { name: "Create Exam", href: "/dashboard/exam/create-exam" },
-      { name: "View All Exam", href: "/dashboard/exam/view-exam" },
-    ],
-  },
+  // {
+  //   name: "Exam",
+  //   icon: GraduationCap,
+  //   basePath: "/dashboard/exam",
+  //   subLinks: [
+  //     { name: "Create Exam", href: "/dashboard/exam/create-exam" },
+  //     { name: "View All Exam", href: "/dashboard/exam/view-exam" },
+  //   ],
+  // },
 
   {
     name: "Our Team",
@@ -57,15 +57,15 @@ const links = [
 
   // { name: "Leaderboard", href: "/dashboard/result", icon: Trophy },
 
-    {
-    name: "Leaderboard",
-    icon: MdOutlineLeaderboard,
-    basePath: "/dashboard/result",
-    subLinks: [
+  //   {
+  //   name: "Leaderboard",
+  //   icon: MdOutlineLeaderboard,
+  //   basePath: "/dashboard/result",
+  //   subLinks: [
     
-      { name: "View All Result", href: "/dashboard/result/view-result" },
-    ],
-  },
+  //     { name: "View All Result", href: "/dashboard/result/view-result" },
+  //   ],
+  // },
 
   {
     name: "Guideline",
