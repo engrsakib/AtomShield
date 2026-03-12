@@ -122,13 +122,13 @@ export default function UpdateAdminModal({ admin, onClose, onUpdated }) {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 mx-4">
-        <div className="flex justify-between items-center mb-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="w-full max-w-lg p-6 mx-4 bg-white shadow-lg rounded-xl">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-800">Update Admin Profile</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 transition-colors hover:text-gray-600"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -138,18 +138,18 @@ export default function UpdateAdminModal({ admin, onClose, onUpdated }) {
 
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
           {/* Profile Image Section */}
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-500 transition-colors">
+          <div className="p-6 text-center transition-colors border-2 border-gray-300 border-dashed rounded-lg hover:border-green-500">
             <div className="flex flex-col items-center justify-center space-y-4">
               {form.image ? (
                 <div className="relative">
                   <img
                     src={form.image}
                     alt="Profile preview"
-                    className="w-24 h-24 rounded-full object-cover border-4 border-green-100 shadow-sm"
+                    className="object-cover w-24 h-24 border-4 border-green-100 rounded-full shadow-sm"
                   />
                   <button
                     onClick={handleRemoveImage}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                    className="absolute p-1 text-white transition-colors bg-red-500 rounded-full -top-2 -right-2 hover:bg-red-600"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -157,7 +157,7 @@ export default function UpdateAdminModal({ admin, onClose, onUpdated }) {
                   </button>
                 </div>
               ) : (
-                <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-300">
+                <div className="flex items-center justify-center w-24 h-24 bg-gray-100 border-2 border-gray-300 rounded-full">
                   <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
@@ -166,7 +166,7 @@ export default function UpdateAdminModal({ admin, onClose, onUpdated }) {
 
               <div className="flex flex-col items-center">
                 <label className="cursor-pointer">
-                  <span className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
+                  <span className="px-4 py-2 text-sm font-medium text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700">
                     {uploading ? "Uploading..." : form.image ? "Change Photo" : "Upload Photo"}
                   </span>
                   <input
@@ -177,7 +177,7 @@ export default function UpdateAdminModal({ admin, onClose, onUpdated }) {
                     disabled={uploading}
                   />
                 </label>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="mt-2 text-xs text-gray-500">
                   JPEG, PNG, WebP (Max 5MB)
                 </p>
               </div>
@@ -187,9 +187,9 @@ export default function UpdateAdminModal({ admin, onClose, onUpdated }) {
           {/* Form Fields */}
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+              <label className="block mb-1 text-sm font-medium text-gray-700">Full Name *</label>
               <input
-                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                className="w-full p-3 transition-all border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Enter full name"
@@ -197,9 +197,9 @@ export default function UpdateAdminModal({ admin, onClose, onUpdated }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+              <label className="block mb-1 text-sm font-medium text-gray-700">Phone Number *</label>
               <input
-                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                className="w-full p-3 transition-all border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 value={form.phone_number}
                 onChange={(e) => setForm({ ...form, phone_number: e.target.value })}
                 placeholder="Enter phone number"
@@ -207,24 +207,24 @@ export default function UpdateAdminModal({ admin, onClose, onUpdated }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+              <label className="block mb-1 text-sm font-medium text-gray-700">Role *</label>
               <select
-                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                className="w-full p-3 transition-all border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 value={form.role}
                 onChange={(e) => setForm({ ...form, role: e.target.value })}
               >
                 <option value="">Select Role</option>
-                <option value="admin">Admin</option>
-                <option value="super_admin">Super Admin</option>
-                <option value="moderator">Moderator</option>
-                <option value="content_manager">Content Manager</option>
+                <option value="ADMIN">Admin</option>
+                <option value="MANAGER">MANAGER</option>
+                <option value="CUSTOMER">CUSTOMER</option>
+                <option value="AGENT">AGENT</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+              <label className="block mb-1 text-sm font-medium text-gray-700">Bio</label>
               <textarea
-                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
+                className="w-full p-3 transition-all border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 value={form.bio}
                 onChange={(e) => setForm({ ...form, bio: e.target.value })}
                 placeholder="Tell us about yourself..."
@@ -233,15 +233,15 @@ export default function UpdateAdminModal({ admin, onClose, onUpdated }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <label className="block mb-1 text-sm font-medium text-gray-700">Password</label>
               <input
-                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                className="w-full p-3 transition-all border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="Enter new password (optional)"
                 type="password"
               />
-              <p className="text-xs text-gray-500 mt-1">Leave blank to keep current password</p>
+              <p className="mt-1 text-xs text-gray-500">Leave blank to keep current password</p>
             </div>
           </div>
         </div>
