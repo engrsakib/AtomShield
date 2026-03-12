@@ -1,0 +1,50 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "src/components/modules/permission/MathEditor.jsx",
+    "src/components/modules/AddQuestion/AddQuestion.jsx",
+    "src/app/dashboard/my-book/page.jsx",
+    "tailwind.config.js",
+    "src/app/dashboard/exam/view-question/page.jsx",
+    "src/components/modules/guidelineCompo/ViewAllGuideline.tsx",
+    "src/components/modules/_Admin/UpdateModal.jsx",
+    "src/components/modules/_student/UserManagement.tsx",
+    "src/components/modules/viewAllQuestion/ViewAllQuestion.jsx",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

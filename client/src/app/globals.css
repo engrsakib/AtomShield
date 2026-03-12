@@ -1,0 +1,52 @@
+
+
+
+/* Optional quick load */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Roboto:wght@300;400;700&display=swap");
+
+/* Quill font class mapping */
+.ql-font-roboto { font-family: "Roboto", sans-serif; }
+.ql-font-poppins { font-family: "Poppins", sans-serif; }
+.ql-font-arial { font-family: Arial, sans-serif; }
+.ql-font-serif { font-family: serif; }
+.ql-font-sans-serif { font-family: sans-serif; }
+
+/* Shape embed */
+.ql-shape-embed { display: inline-block; padding: 8px 0; }
+.ql-shape-embed svg { color: #111; }
+
+
+
+
+
+@import "tailwindcss";
+
+
+
+/* bg-[#a71a16] */
+/* text-[#FFFFFF] */
+
+
+
+
+:root {
+
+     --font-poppins: "Poppins", sans-serif;
+}
+
+body {
+  font-family: var(--font-poppins);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
