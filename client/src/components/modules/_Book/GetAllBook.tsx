@@ -37,7 +37,7 @@ export default function ViewAllBooks() {
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [permissionError, setPermissionError] = useState(false); // New state for 403
+  const [permissionError, setPermissionError] = useState(false); 
 
   const token = getCookie("access_token");
 
@@ -71,7 +71,7 @@ export default function ViewAllBooks() {
         const safeBooks = [...(response?.data?.data || [])];
         setBooks(safeBooks);
         setTotal(response?.data?.meta?.total || safeBooks.length);
-      } else if (response.statusCode === 403) {
+      } else if (response.statusCode === 403 || (!response.success && response.message?.toLowerCase().includes("forbidden"))) {
         setPermissionError(true);
       }
     } catch (err: any) {
@@ -167,32 +167,37 @@ export default function ViewAllBooks() {
   };
 
   // ============================
-  // PERMISSION DENIED UI
+  // PERMISSION DENIED UI (Admin List এর ডিজাইন অনুযায়ী)
   // ============================
   if (permissionError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] p-4 text-center">
+      <div className="flex flex-col items-center justify-center min-h-[85vh] p-6 text-center">
         <div className="relative mb-8">
-          <div className="absolute inset-0 bg-teal-100 rounded-full opacity-50 blur-3xl animate-pulse"></div>
-          <div className="relative flex items-center justify-center w-28 h-28 bg-white border border-teal-50 shadow-2xl rounded-[2.5rem]">
-            <Lock className="w-12 h-12 text-teal-600" />
+          {/* Background blur effect */}
+          <div className="absolute inset-0 bg-pink-200 rounded-full opacity-30 blur-3xl animate-pulse"></div>
+          
+          <div className="relative flex items-center justify-center w-32 h-32 bg-white border border-gray-100 shadow-2xl rounded-[3rem]">
+            <Lock className="w-16 h-16 text-pink-600" />
           </div>
-          <ShieldAlert className="absolute w-10 h-10 -bottom-2 -right-2 text-amber-500" />
+          <ShieldAlert className="absolute w-12 h-12 -bottom-2 -right-2 text-amber-500 animate-bounce" />
         </div>
-        <h2 className="mb-3 text-4xl font-black tracking-tight text-gray-900">Access Restricted</h2>
-        <p className="max-w-md mb-10 font-medium leading-relaxed text-gray-500">
-          Oops! You don't have permission to visit this route. Please contact your administrator to grant access to the Book Management system.
+
+        <h2 className="mb-4 text-5xl font-black tracking-tighter text-gray-900">Access Denied!</h2>
+        <p className="max-w-md mb-10 text-lg font-medium leading-relaxed text-gray-500">
+          Sorry, you don't have enough permission to view this book list. Please contact your founder or system administrator.
         </p>
+
         <div className="flex flex-col gap-4 sm:flex-row">
           <button 
             onClick={() => router.back()}
-            className="flex items-center justify-center gap-2 px-8 py-4 font-bold text-gray-700 transition-all bg-white border-2 border-gray-100 rounded-2xl hover:bg-gray-50 active:scale-95"
+            className="flex items-center justify-center gap-2 px-10 py-4 font-bold text-gray-700 transition-all bg-white border-2 border-gray-100 shadow-sm rounded-2xl hover:bg-gray-50 active:scale-95"
           >
             <ArrowLeft className="w-5 h-5" /> Go Back
           </button>
+          
           <Link href="/dashboard">
-            <button className="px-10 py-4 font-bold text-white transition-all bg-teal-600 shadow-xl rounded-2xl shadow-teal-100 hover:bg-teal-700 active:scale-95">
-              Go to Dashboard
+            <button className="px-12 py-4 font-bold text-white transition-all bg-gray-900 shadow-xl rounded-2xl hover:bg-black active:scale-95">
+              Return Dashboard
             </button>
           </Link>
         </div>

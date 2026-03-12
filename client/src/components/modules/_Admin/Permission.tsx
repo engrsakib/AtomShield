@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, Save, Shield, CheckCircle2, XCircle, ArrowLeft, History, Clock, ShieldAlert, PlusCircle, MinusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Swal from "sweetalert2"; // SweetAlert2 ইম্পোর্ট করা হয়েছে
 
 // --- Helpers ---
 function getCookie(name: string): string | null {
@@ -54,30 +55,11 @@ export default function ManagePermissions() {
   const [saving, setSaving] = useState(false);
   const [showAudit, setShowAudit] = useState(false);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   
   const [myPermissions, setMyPermissions] = useState<string[]>([]);
   const [hasViewAccess, setHasViewAccess] = useState(true);
 
   const permissionGroups = [
-    { title: "Student", icon: "👨‍🎓", permissions: [
-      { key: PermissionEnum.CREATE_STUDENT, label: "Create Student" },
-      { key: PermissionEnum.VIEW_STUDENT, label: "View Student" },
-      { key: PermissionEnum.UPDATE_STUDENT, label: "Update Student" },
-      { key: PermissionEnum.DELETE_STUDENT, label: "Delete Student" },
-    ]},
-    { title: "Exam", icon: "📝", permissions: [
-      { key: PermissionEnum.CREATE_EXAM, label: "Create Exam" },
-      { key: PermissionEnum.VIEW_EXAM, label: "View Exam" },
-      { key: PermissionEnum.UPDATE_EXAM, label: "Update Exam" },
-      { key: PermissionEnum.DELETE_EXAM, label: "Delete Exam" },
-    ]},
-    { title: "Question", icon: "❓", permissions: [
-      { key: PermissionEnum.CREATE_QUESTION, label: "Create Question" },
-      { key: PermissionEnum.VIEW_QUESTION, label: "View Question" },
-      { key: PermissionEnum.UPDATE_QUESTION, label: "Update Question" },
-      { key: PermissionEnum.DELETE_QUESTION, label: "Delete Question" },
-    ]},
     { title: "Staff & Management", icon: "👥", permissions: [
       { key: PermissionEnum.CREATE_STAFF, label: "Create Staff" },
       { key: PermissionEnum.VIEW_STAFF, label: "View Staff" },
@@ -86,6 +68,26 @@ export default function ManagePermissions() {
       { key: PermissionEnum.PERMISSIONS_AUDIT, label: "Permissions Audit" },
       { key: PermissionEnum.PERMISSIONS_VIEW, label: "View Permissions" },
     ]},
+    {
+      title: "Book",
+      icon: "📚",
+      permissions: [
+        { key: PermissionEnum.CREATE_BOOK, label: "Create Book" },
+        { key: PermissionEnum.VIEW_BOOK, label: "View Book" },
+        { key: PermissionEnum.UPDATE_BOOK, label: "Update Book" },
+        { key: PermissionEnum.DELETE_BOOK, label: "Delete Book" },
+      ],
+    },
+    {
+      title: "Guideline",
+      icon: "📋",
+      permissions: [
+        { key: PermissionEnum.CREATE_GUIDELINE, label: "Create Guideline" },
+        { key: PermissionEnum.VIEW_GUIDELINE, label: "View Guideline" },
+        { key: PermissionEnum.UPDATE_GUIDELINE, label: "Update Guideline" },
+        { key: PermissionEnum.DELETE_GUIDELINE, label: "Delete Guideline" },
+      ],
+    },
   ];
 
   useEffect(() => {
@@ -126,7 +128,12 @@ export default function ManagePermissions() {
         setAuditLogs(json.data.audit_logs || []);
       }
     } catch (e) {
-      setMessage({ type: "error", text: "Connection error" });
+      Swal.fire({
+        icon: 'error',
+        title: 'Connection Error',
+        text: 'Could not connect to the server.',
+        confirmButtonColor: '#166534'
+      });
     } finally {
       setLoading(false);
     }
@@ -147,13 +154,31 @@ export default function ManagePermissions() {
       });
       const json = await res.json();
       if (json.success) {
-        setMessage({ type: "success", text: "Saved successfully!" });
+        Swal.fire({
+          icon: 'success',
+          title: 'Saved!',
+          text: 'Permissions updated successfully.',
+          timer: 2000,
+          showConfirmButton: false,
+          toast: true,
+          position: 'top-end'
+        });
         fetchPermissionsForId(adminId); 
       } else {
-        setMessage({ type: "error", text: json.message || "Save failed" });
+        Swal.fire({
+          icon: 'error',
+          title: 'Update Failed',
+          text: json.message || "Something went wrong",
+          confirmButtonColor: '#166534'
+        });
       }
     } catch (e) {
-      setMessage({ type: "error", text: "Error saving data" });
+      Swal.fire({
+        icon: 'error',
+        title: 'Save Failed',
+        text: 'Error saving data to the server.',
+        confirmButtonColor: '#166534'
+      });
     } finally {
       setSaving(false);
     }
@@ -215,13 +240,6 @@ export default function ManagePermissions() {
           </div>
         </div>
       </div>
-
-      {message && (
-        <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-in slide-in-from-top-2 duration-300 ${message.type === "success" ? "bg-green-100 text-green-800 border border-green-200" : "bg-red-100 text-red-800 border border-red-200"}`}>
-          {message.type === "success" ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
-          <span className="font-semibold">{message.text}</span>
-        </div>
-      )}
 
       {/* Permission Grid */}
       <div className="grid grid-cols-1 gap-6 mb-24 md:grid-cols-2">
@@ -296,7 +314,7 @@ export default function ManagePermissions() {
                         </div>
                       </div>
 
-                      {/* --- Added Permissions --- */}
+                      {/* Added Permissions */}
                       {log.added && log.added.length > 0 && (
                         <div className="mb-4">
                           <div className="flex items-center gap-1.5 mb-2 text-green-700">
@@ -313,7 +331,7 @@ export default function ManagePermissions() {
                         </div>
                       )}
 
-                      {/* --- Removed Permissions --- */}
+                      {/* Removed Permissions */}
                       {log.removed && log.removed.length > 0 && (
                         <div className="mb-4">
                           <div className="flex items-center gap-1.5 mb-2 text-red-700">
@@ -328,11 +346,6 @@ export default function ManagePermissions() {
                             ))}
                           </div>
                         </div>
-                      )}
-
-                      {/* Fallback */}
-                      {(!log.added?.length && !log.removed?.length) && (
-                        <p className="mb-4 text-sm italic text-gray-500">No specific permission changes recorded.</p>
                       )}
 
                       {/* Footer: User Identity */}

@@ -1,6 +1,3 @@
-
-
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -15,6 +12,7 @@ import {
   Loader2,
   AlertCircle,
   ChevronDown,
+  Lock, // আগের ডিজাইনের জন্য Lock আইকন
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
@@ -28,13 +26,12 @@ function getCookie(name: string) {
   return null;
 }
 
-
-
 export default function ViewAllYouTubeVideos() {
   const router = useRouter();
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasPermission, setHasPermission] = useState(true); // পারমিশন স্টেট
 
   // Pagination + Limit Filter
   const [page, setPage] = useState(1);
@@ -67,6 +64,14 @@ export default function ViewAllYouTubeVideos() {
       });
 
       const data = await res.json();
+
+      // ৪0৩ চেক (Forbidden)
+      if (res.status === 403 || data.statusCode === 403) {
+        setHasPermission(false);
+        setLoading(false);
+        return;
+      }
+
       if (!res.ok) throw new Error(data.message);
 
       setVideos(data.data.data);
@@ -107,6 +112,12 @@ export default function ViewAllYouTubeVideos() {
       });
 
       const data = await res.json();
+
+      if (res.status === 403) {
+        Swal.fire("Forbidden", "You don't have permission to update status", "error");
+        return;
+      }
+
       if (!res.ok) throw new Error(data.message);
 
       Swal.fire({
@@ -148,6 +159,11 @@ export default function ViewAllYouTubeVideos() {
         headers: { Authorization: token || "" },
       });
 
+      if (res.status === 403) {
+        Swal.fire("Forbidden", "You don't have permission to delete", "error");
+        return;
+      }
+
       if (!res.ok) throw new Error("Delete failed");
 
       Swal.fire({
@@ -164,23 +180,47 @@ export default function ViewAllYouTubeVideos() {
     }
   };
 
-  // ==============================
+  // Permission Denied View (হুবহু আগের ডিজাইনে)
+  if (!hasPermission) {
+    return (
+      <div className="min-h-[80vh] flex flex-col justify-center items-center p-4">
+        <div className="max-w-lg p-10 text-center border-2 border-red-200 shadow-xl bg-red-50 rounded-3xl">
+          <div className="flex items-center justify-center w-24 h-24 mx-auto mb-6 bg-red-100 rounded-full">
+            <Lock className="w-12 h-12 text-red-600" />
+          </div>
+          <h1 className="mb-4 text-3xl font-bold text-red-700">
+            Permission Denied
+          </h1>
+          <p className="mb-8 text-lg text-red-600">
+            You do not have permission to view this content. Please contact your
+            administrator for access.
+          </p>
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="px-8 py-3 font-bold text-white transition-all bg-red-600 shadow-lg rounded-xl hover:bg-red-700"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Loading Screen
-  // ==============================
   if (loading && videos.length === 0)
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <Loader2 className="w-12 h-12 animate-spin text-teal-600" />
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-12 h-12 text-teal-600 animate-spin" />
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-emerald-50 p-6">
+    <div className="min-h-screen p-6 bg-gradient-to-br from-teal-50 to-emerald-50">
       <div className="max-w-full mx-auto">
 
         {/* HEADER */}
-        <div className="bg-gradient-to-r from-teal-600 to-emerald-600 p-6 rounded-2xl text-white mb-6 shadow-lg flex justify-between items-center">
-          <div className="flex gap-4 items-center">
+        <div className="flex items-center justify-between p-6 mb-6 text-white shadow-lg bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl">
+          <div className="flex items-center gap-4">
             <FileText className="w-10 h-10" />
             <div>
               <h1 className="text-3xl font-bold">All YouTube Videos</h1>
@@ -190,10 +230,10 @@ export default function ViewAllYouTubeVideos() {
         </div>
 
         {/* COLLAPSIBLE FILTER PANEL */}
-        <div className="bg-white rounded-xl shadow-md mb-6">
+        <div className="mb-6 bg-white shadow-md rounded-xl">
           <button
             onClick={() => setShowFilter(!showFilter)}
-            className="w-full flex justify-between items-center p-4 text-left font-semibold text-gray-700"
+            className="flex items-center justify-between w-full p-4 font-semibold text-left text-gray-700"
           >
             <span>Advanced Filters</span>
             <ChevronDown
@@ -204,7 +244,7 @@ export default function ViewAllYouTubeVideos() {
           </button>
 
           {showFilter && (
-            <div className="p-4 border-t grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 p-4 border-t md:grid-cols-3">
 
               {/* Page Selector */}
               <div>
@@ -214,7 +254,7 @@ export default function ViewAllYouTubeVideos() {
                   min={1}
                   value={page}
                   onChange={(e) => setPage(Number(e.target.value))}
-                  className="w-full mt-1 border p-2 rounded-xl"
+                  className="w-full p-2 mt-1 border rounded-xl"
                 />
               </div>
 
@@ -224,7 +264,7 @@ export default function ViewAllYouTubeVideos() {
                 <select
                   value={limit}
                   onChange={(e) => setLimit(Number(e.target.value))}
-                  className="w-full mt-1 border p-2 rounded-xl"
+                  className="w-full p-2 mt-1 border rounded-xl"
                 >
                   <option value={5}>5</option>
                   <option value={10}>10</option>
@@ -238,14 +278,14 @@ export default function ViewAllYouTubeVideos() {
                 <label className="font-semibold text-gray-600">Search</label>
                 <input
                   type="text"
-                  className="w-full mt-1 border p-2 rounded-xl"
+                  className="w-full p-2 mt-1 border rounded-xl"
                   placeholder="Search videos..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                 />
                 <button
                   onClick={handleSearch}
-                  className="mt-2 w-full bg-teal-600 text-white p-2 rounded-xl"
+                  className="w-full p-2 mt-2 text-white bg-teal-600 rounded-xl"
                 >
                   Apply
                 </button>
@@ -257,21 +297,21 @@ export default function ViewAllYouTubeVideos() {
 
         {/* ERROR */}
         {error && (
-          <div className="bg-red-100 border border-red-300 p-4 rounded-xl mb-6 flex gap-2 items-center">
+          <div className="flex items-center gap-2 p-4 mb-6 bg-red-100 border border-red-300 rounded-xl">
             <AlertCircle className="w-6 h-6 text-red-600" />
             <span className="text-red-700">{error}</span>
           </div>
         )}
 
         {/* TABLE */}
-        <div className="bg-white rounded-2xl shadow overflow-hidden">
-          <table className="w-full hidden lg:table">
-            <thead className="bg-teal-600 text-white">
+        <div className="overflow-hidden bg-white shadow rounded-2xl">
+          <table className="hidden w-full lg:table">
+            <thead className="text-white bg-teal-600">
               <tr>
-                <th className="p-4">Thumbnail</th>
-                <th className="p-4">Title</th>
-                <th className="p-4">Play</th>
-                <th className="p-4">Status</th>
+                <th className="p-4 text-left">Thumbnail</th>
+                <th className="p-4 text-left">Title</th>
+                <th className="p-4 text-left">Play</th>
+                <th className="p-4 text-left">Status</th>
                 <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
@@ -282,24 +322,25 @@ export default function ViewAllYouTubeVideos() {
                   <td className="p-4">
                     <img
                       src={v.thumbnail_url}
-                      className="w-24 h-16 rounded-lg object-cover"
+                      alt={v.title}
+                      className="object-cover w-24 h-16 rounded-lg"
                     />
                   </td>
 
                   <td className="p-4">
                     <p className="font-semibold">{v.title}</p>
-                    <p
-                      className="text-gray-600 text-sm line-clamp-2"
+                    <div
+                      className="text-sm text-gray-600 line-clamp-2"
                       dangerouslySetInnerHTML={{ __html: v.description }}
-                    ></p>
+                    ></div>
                   </td>
 
                   <td className="p-4">
                     <button
                       onClick={() => window.open(v.video_url, "_blank")}
-                      className="px-4 py-2 bg-red-100 text-red-600 rounded-lg"
+                      className="px-4 py-2 text-red-600 bg-red-100 rounded-lg whitespace-nowrap"
                     >
-                      <Play className="w-4 h-4 inline" /> Play
+                      <Play className="inline w-4 h-4 mr-1" /> Play
                     </button>
                   </td>
 
@@ -309,33 +350,33 @@ export default function ViewAllYouTubeVideos() {
                       onChange={(e) =>
                         updatePublishStatus(v.video_number, e.target.value)
                       }
-                      className="border p-2 rounded-lg bg-white"
+                      className="p-2 bg-white border rounded-lg"
                     >
                       <option value="true">Published</option>
                       <option value="false">Unpublished</option>
                     </select>
                   </td>
 
-                  <td className="p-4 text-center flex justify-center gap-3">
-                    {/* EDIT BUTTON */}
-                    <button
-                      onClick={() =>
-                        router.push(
-                          `/dashboard/youtube/update?video=${v.video_number}`
-                        )
-                      }
-                      className="p-2 bg-green-100 text-green-600 rounded-lg"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
+                  <td className="p-4">
+                    <div className="flex justify-center gap-3">
+                        <button
+                          onClick={() =>
+                            router.push(
+                              `/dashboard/youtube/update?video=${v.video_number}`
+                            )
+                          }
+                          className="p-2 text-green-600 bg-green-100 rounded-lg"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
 
-                    {/* DELETE BUTTON */}
-                    <button
-                      onClick={() => deleteVideo(v.video_number, v.title)}
-                      className="p-2 bg-red-100 text-red-600 rounded-lg"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                        <button
+                          onClick={() => deleteVideo(v.video_number, v.title)}
+                          className="p-2 text-red-600 bg-red-100 rounded-lg"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -343,7 +384,7 @@ export default function ViewAllYouTubeVideos() {
           </table>
 
           {/* PAGINATION */}
-          <div className="flex justify-between items-center p-4 bg-gray-50">
+          <div className="flex items-center justify-between p-4 bg-gray-50">
             <button
               disabled={page === 1}
               onClick={() => setPage(page - 1)}
