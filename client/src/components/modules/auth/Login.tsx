@@ -1,34 +1,25 @@
-
-
-
-
-
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Phone,
-  Lock,
-  Eye,
-  EyeOff,
-  LogIn,
-  AlertCircle,
-} from "lucide-react";
+import { Phone, Lock, Eye, EyeOff, LogIn, AlertCircle } from "lucide-react";
 import Swal from "sweetalert2";
 import { ENV } from "@/config/env";
 
 const Login: React.FC = () => {
   const router = useRouter();
 
-
   const [redirectUrl, setRedirectUrl] = useState("/dashboard");
+  const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const r = params.get("redirect");
       if (r) setRedirectUrl(r);
+
+      // Trigger animation after mount
+      setTimeout(() => setAnimate(true), 100);
     }
   }, []);
 
@@ -45,7 +36,6 @@ const Login: React.FC = () => {
     password?: string;
   }>({});
 
-  // ONLY NUMBER
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "");
     setFormData((prev) => ({ ...prev, phone_number: value }));
@@ -54,7 +44,6 @@ const Login: React.FC = () => {
     }
   };
 
-  // INPUT HANDLER
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -63,7 +52,6 @@ const Login: React.FC = () => {
     }
   };
 
-  // VALIDATION
   const validateForm = () => {
     const newErrors: { phone_number?: string; password?: string } = {};
 
@@ -80,32 +68,31 @@ const Login: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // LOGIN HANDLER
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
     setIsLoading(true);
 
     try {
-      const res = await fetch(
-        `${ENV.BASE_URL}/admin/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        }
-      );
+      const res = await fetch(`${ENV.BASE_URL}/admin/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
       const result = await res.json();
 
       if (result.success && result.data) {
-
         if (result.data.access_token) {
-          document.cookie = `access_token=${result.data.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+          document.cookie = `access_token=${result.data.access_token}; path=/; max-age=${
+            60 * 60 * 24 * 7
+          }; SameSite=Lax`;
         }
 
         if (result.data.refresh_token) {
-          document.cookie = `refresh_token=${result.data.refresh_token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+          document.cookie = `refresh_token=${result.data.refresh_token}; path=/; max-age=${
+            60 * 60 * 24 * 30
+          }; SameSite=Lax`;
         }
 
         Swal.fire({
@@ -146,22 +133,22 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl">
-        <div className="h-32 bg-gradient-to-br from-green-600 via-green-700 to-emerald-700 flex flex-col items-center justify-center text-white rounded-t-2xl">
-          <LogIn className="w-12 h-12 mb-2" />
-          <h2 className="text-2xl font-bold">Login</h2>
-          <p className="text-green-100 text-sm">MCQ Analysis Admin</p>
-        </div>
+    <div className="flex w-full min-h-screen overflow-hidden bg-white">
 
-        <div className="p-8 space-y-5">
-          {/* Phone Input */}
-          <div>
-            <label className="block mb-2 font-semibold text-gray-700">
+      {/* LEFT SIDE LOGIN */}
+      <div className="flex items-center justify-center w-full p-10 md:w-1/2">
+        <div className="w-full max-w-sm">
+          <h1 className="mb-2 text-4xl font-bold text-gray-900">Obliq</h1>
+          <h2 className="text-2xl font-semibold text-gray-800">Login</h2>
+          <p className="mb-8 text-gray-500">Enter your details to continue</p>
+
+          {/* Phone */}
+          <div className="mb-5">
+            <label className="block mb-2 font-medium text-gray-700">
               Phone Number
             </label>
             <div className="relative">
-              <Phone className="absolute left-3 top-3 text-gray-400" />
+              <Phone className="absolute text-gray-400 left-3 top-3" />
               <input
                 type="text"
                 name="phone_number"
@@ -171,23 +158,23 @@ const Login: React.FC = () => {
                 placeholder="01XXXXXXXXX"
                 maxLength={11}
                 disabled={isLoading}
-                className="w-full pl-12 pr-4 py-3 border-2 rounded-xl focus:border-green-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full py-3 pl-12 pr-4 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
               />
             </div>
             {errors.phone_number && (
-              <p className="text-red-600 text-sm flex items-center gap-1 mt-1">
+              <p className="flex items-center gap-1 mt-1 text-sm text-red-600">
                 <AlertCircle className="w-4 h-4" /> {errors.phone_number}
               </p>
             )}
           </div>
 
           {/* Password */}
-          <div>
-            <label className="block mb-2 font-semibold text-gray-700">
+          <div className="mb-5">
+            <label className="block mb-2 font-medium text-gray-700">
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 text-gray-400" />
+              <Lock className="absolute text-gray-400 left-3 top-3" />
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
@@ -196,11 +183,11 @@ const Login: React.FC = () => {
                 onKeyPress={handleKeyPress}
                 placeholder="Enter your password"
                 disabled={isLoading}
-                className="w-full pl-12 pr-12 py-3 border-2 rounded-xl focus:border-green-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full py-3 pl-12 pr-12 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
               />
               <button
                 type="button"
-                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors disabled:cursor-not-allowed"
+                className="absolute text-gray-400 right-3 top-3 hover:text-gray-600"
                 onClick={() => setShowPassword(!showPassword)}
                 disabled={isLoading}
               >
@@ -209,7 +196,7 @@ const Login: React.FC = () => {
             </div>
 
             {errors.password && (
-              <p className="text-red-600 text-sm flex items-center gap-1 mt-1">
+              <p className="flex items-center gap-1 mt-1 text-sm text-red-600">
                 <AlertCircle className="w-4 h-4" /> {errors.password}
               </p>
             )}
@@ -219,11 +206,11 @@ const Login: React.FC = () => {
           <button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-3.5 rounded-xl shadow-lg hover:opacity-90 flex items-center justify-center gap-2 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center w-full gap-2 py-3 font-semibold text-white transition bg-orange-600 rounded-lg hover:bg-orange-700 disabled:opacity-50"
           >
             {isLoading ? (
               <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white rounded-full border-t-transparent animate-spin" />
                 Logging in...
               </>
             ) : (
@@ -232,7 +219,31 @@ const Login: React.FC = () => {
               </>
             )}
           </button>
+
+          <p className="mt-4 text-sm text-gray-600">
+            Don’t have an account?{" "}
+            <span className="font-semibold text-orange-600 cursor-pointer">
+              Sign up
+            </span>
+          </p>
         </div>
+      </div>
+
+      {/* RIGHT SIDE ANIMATED PANEL */}
+      <div className="relative items-center justify-center hidden w-1/2 overflow-hidden md:flex">
+
+        {/* Background Gradient */}
+        <img
+          src="/grad.png"
+          className="absolute inset-0 object-cover h-[90%] w-[80%] opacity-70 top-1/2 left-2/4 -translate-x-1/2 -translate-y-1/2 border-4 border-white rounded-3xl shadow-lg"
+        />
+
+        {/* Sliding Image */}
+        <img
+          src="/side.png"
+          className={`absolute w-[85%] left-3/5 transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] 
+            ${animate ? "translate-x-0 opacity-100" : "translate-x-[120%] opacity-0"}`}
+        />
       </div>
     </div>
   );
